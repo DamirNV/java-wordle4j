@@ -15,9 +15,32 @@ package ru.yandex.practicum;
 public class WordleGame {
 
     private String answer;
-
     private int steps;
-
     private WordleDictionary dictionary;
+
+    public WordleGame(WordleDictionary dictionary) {
+        this.answer = dictionary.getRandomWord();
+        this.steps = 6;
+        this.dictionary = dictionary;
+    }
+
+    public String checkGuess(String guess) {
+        steps--;
+
+        if (guess.equalsIgnoreCase(answer)) {
+            return "Угадал!";
+        }
+
+        return "Не угадал!";
+    }
+
+    public boolean isGameOver() {
+        return steps <= 0;
+    }
+
+    public boolean isWordGuessed(String lastGuess) {
+        return lastGuess.equalsIgnoreCase(answer);
+    }
+
 
 }
