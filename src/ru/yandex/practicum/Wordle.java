@@ -38,6 +38,8 @@ public class Wordle {
             if (game.isWordGuessed(guess)) {
                 System.out.println("Поздравляем! Вы угадали!");
                 break;
+            } else {
+                System.out.println(result);
             }
         }
 

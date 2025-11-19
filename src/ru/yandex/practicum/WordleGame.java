@@ -26,12 +26,7 @@ public class WordleGame {
 
     public String checkGuess(String guess) {
         steps--;
-
-        if (guess.equalsIgnoreCase(answer)) {
-            return "Угадал!";
-        }
-
-        return "Не угадал!";
+        return generateHint(guess);
     }
 
     public boolean isGameOver() {
@@ -39,8 +34,23 @@ public class WordleGame {
     }
 
     public boolean isWordGuessed(String lastGuess) {
-        return lastGuess.equalsIgnoreCase(answer);
+        return generateHint(lastGuess).equals("+++++");
     }
 
+    private String generateHint(String guess) {
+        guess = guess.toLowerCase();
+        StringBuilder hint = new StringBuilder();
+        for (int i = 0; i < guess.length(); i++) {
+            char currentChar = guess.charAt(i);
+            if (currentChar == answer.charAt(i)) {
+                hint.append('+');
+            } else if (answer.indexOf(currentChar) != -1) {
+                hint.append('^');
+            } else {
+                hint.append('-');
+            }
+        }
+        return hint.toString();
+    }
 
 }
