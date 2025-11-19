@@ -16,27 +16,23 @@ import java.util.List;
  */
 public class WordleDictionaryLoader {
 
-
     public WordleDictionary loadDictionary(String filename) {
+
         List<String> words = new ArrayList<>();
 
         try (BufferedReader reader = new BufferedReader(
                 new InputStreamReader(new FileInputStream(filename), StandardCharsets.UTF_8))) {
 
             String line;
-            int totalWords = 0;
-            int fiveLetterWords = 0;
 
             while ((line = reader.readLine()) != null) {
-                totalWords++;
+
                 String formattedWord = formatWord(line.trim());
                 if (formattedWord.length() == 5) {
                     words.add(formattedWord);
-                    fiveLetterWords++;
+
                 }
             }
-
-
 
         } catch (IOException e) {
 

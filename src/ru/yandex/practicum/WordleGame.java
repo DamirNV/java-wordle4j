@@ -1,5 +1,6 @@
 package ru.yandex.practicum;
 
+import java.util.*;
 /*
 в этом классе хранится словарь и состояние игры
     текущий шаг
@@ -17,15 +18,18 @@ public class WordleGame {
     private String answer;
     private int steps;
     private WordleDictionary dictionary;
+    private List<String> previousGuesses;
 
     public WordleGame(WordleDictionary dictionary) {
         this.answer = dictionary.getRandomWord();
         this.steps = 6;
         this.dictionary = dictionary;
+        this.previousGuesses = new ArrayList<>();
     }
 
     public String checkGuess(String guess) {
         steps--;
+        previousGuesses.add(guess);
         return generateHint(guess);
     }
 
@@ -35,6 +39,16 @@ public class WordleGame {
 
     public boolean isWordGuessed(String lastGuess) {
         return generateHint(lastGuess).equals("+++++");
+    }
+
+    public String generateHint() {
+        if (previousGuesses.isEmpty()) {
+            return dictionary.getRandomWord();
+        }
+
+        // Пока простой вариант - вернуть случайное слово
+        // Позже можно улучшить логику
+        return dictionary.getRandomWord();
     }
 
     private String generateHint(String guess) {
@@ -52,5 +66,7 @@ public class WordleGame {
         }
         return hint.toString();
     }
+
+
 
 }
