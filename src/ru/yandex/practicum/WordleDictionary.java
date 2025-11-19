@@ -4,11 +4,6 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.Random;
 
-/*
-этот класс содержит в себе список слов List<String>
-    его методы похожи на методы списка, но учитывают особенности игры
-    также этот класс может содержать рутинные функции по сравнению слов, букв и т.д.
- */
 public class WordleDictionary {
 
     private List<String> words;
@@ -20,11 +15,25 @@ public class WordleDictionary {
     }
 
     public boolean contains(String word) {
-        return words.contains(word.toLowerCase());
+        if (word == null || word.trim().isEmpty()) {
+            throw new WordNotFoundInDictionaryException("Пустая строка");
+        }
+        String formattedWord = word.toLowerCase().replace('ё', 'е').trim();
+        if (!words.contains(formattedWord)) {
+            throw new WordNotFoundInDictionaryException(word);
+        }
+        return true;
     }
 
     public String getRandomWord() {
+        if (words.isEmpty()) {
+            throw new WordleGameException("Словарь пуст");
+        }
         return words.get(random.nextInt(words.size()));
+    }
+
+    public List<String> getWords() {
+        return new ArrayList<>(words);
     }
 
 }
