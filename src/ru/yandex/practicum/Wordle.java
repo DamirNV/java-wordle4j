@@ -17,7 +17,8 @@ public class Wordle {
 
         Scanner scanner = new Scanner(System.in);
 
-        WordleDictionary dictionary = new WordleDictionary();
+        WordleDictionaryLoader loader = new WordleDictionaryLoader();
+        WordleDictionary dictionary = loader.loadDictionary("words_ru.txt");
 
         WordleGame game = new WordleGame(dictionary);
 
@@ -33,7 +34,6 @@ public class Wordle {
             }
 
             String result = game.checkGuess(guess);
-            System.out.println("Результат: " + result);
 
             if (game.isWordGuessed(guess)) {
                 System.out.println("Поздравляем! Вы угадали!");
@@ -46,6 +46,6 @@ public class Wordle {
 
 
 
-    }
+}
 
 

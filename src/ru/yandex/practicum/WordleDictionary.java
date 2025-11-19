@@ -14,12 +14,8 @@ public class WordleDictionary {
     private List<String> words;
     private Random random;
 
-    public WordleDictionary() {
-        this.words = new ArrayList<>();
-        this.words.add("стол");
-        this.words.add("стул");
-        this.words.add("ручка");
-        this.words.add("бумага");
+    public WordleDictionary(List<String> words) {
+        this.words = new ArrayList<>(words);
         this.random = new Random();
     }
 
