@@ -15,10 +15,37 @@ public class Wordle {
 
     public static void main(String[] args) {
 
-        Scanner scan = new Scanner(System.in);
+        Scanner scanner = new Scanner(System.in);
+
+        WordleDictionary dictionary = new WordleDictionary();
+
+        WordleGame game = new WordleGame(dictionary);
+
+        System.out.println("Угадайте слово!");
+
+        while (!game.isGameOver()) {
+            System.out.print("Ваша догадка: ");
+            String guess = scanner.nextLine();
+
+            if (!dictionary.contains(guess)) {
+                System.out.println("Слова нет в словаре!");
+                continue;
+            }
+
+            String result = game.checkGuess(guess);
+            System.out.println("Результат: " + result);
+
+            if (game.isWordGuessed(guess)) {
+                System.out.println("Поздравляем! Вы угадали!");
+                break;
+            }
+        }
+
+        scanner.close();
+    }
 
 
 
     }
 
-}
+
