@@ -21,6 +21,11 @@ public class WordleDictionaryLoader {
             throw new WordleSystemException("Имя файла не может быть пустым");
         }
 
+        File file = new File(filename);
+        if (!file.exists()) {
+            throw new WordleSystemException("Файл словаря не найден: " + filename);
+        }
+
         List<String> words = new ArrayList<>();
         logWriter.println("Загрузка словаря из файла: " + filename);
 
@@ -54,11 +59,7 @@ public class WordleDictionaryLoader {
     }
 
     private String formatWord(String word) {
-        if (word == null) {
-            return "";
-        }
-        return word.toLowerCase()
-                .replace('ё', 'е')
-                .trim();
+        if (word == null) return "";
+        return word.toLowerCase().replace('ё', 'е').trim();
     }
 }

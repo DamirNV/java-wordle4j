@@ -29,26 +29,9 @@ public class WordleDictionary {
     }
 
     public boolean contains(String word) {
-        if (word == null) {
-            throw new WordNotFoundInDictionaryException("Слово не может быть null");
-        }
-
-        String normalizedWord = normalizeWord(word);
-        logWriter.println("Проверка слова в словаре: " + normalizedWord);
-
-        if (normalizedWord.isEmpty()) {
-            throw new WordNotFoundInDictionaryException("Пустая строка");
-        }
-
-        if (normalizedWord.length() != 5) {
-            throw new WordNotFoundInDictionaryException("Слово должно содержать 5 букв");
-        }
-
-        if (!words.contains(normalizedWord)) {
-            throw new WordNotFoundInDictionaryException(word);
-        }
-
-        return true;
+        if (word == null) return false;
+        String normalized = normalizeWord(word);
+        return normalized.length() == 5 && words.contains(normalized);
     }
 
     public String getRandomWord() {

@@ -6,6 +6,7 @@ import org.junit.jupiter.api.DisplayName;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -22,15 +23,16 @@ class WordleDictionaryLoaderTest {
     @Test
     @DisplayName("Загрузка словаря из существующего файла")
     void loadDictionary_ValidFile_ReturnsDictionary() {
-        String testContent = "ручка\nбумага\nтесто\n";
+        String testContent = "аббат\nавеню\nавгит\nаврал\nабак\n";
         File testFile = createTempFile(testContent);
 
         WordleDictionaryLoader loader = new WordleDictionaryLoader(testLogWriter);
         WordleDictionary dictionary = loader.loadDictionary(testFile.getAbsolutePath());
 
         assertNotNull(dictionary);
-        assertTrue(dictionary.contains("ручка"));
-        assertTrue(dictionary.contains("тесто"));
+        assertTrue(dictionary.contains("аббат"));
+        assertTrue(dictionary.contains("авеню"));
+        assertTrue(dictionary.contains("авгит"));
 
         testFile.delete();
     }
@@ -38,20 +40,21 @@ class WordleDictionaryLoaderTest {
     @Test
     @DisplayName("Загрузка словаря фильтрует только 5-буквенные слова")
     void loadDictionary_FiltersFiveLetterWords() {
-        String testContent = "ручка\nбумага\nтесто\nдлинноеслово\nкот\n";
+        String testContent = "аббат\nабажур\nбанан\nкот\nабсурд\n";
         File testFile = createTempFile(testContent);
 
         WordleDictionaryLoader loader = new WordleDictionaryLoader(testLogWriter);
         WordleDictionary dictionary = loader.loadDictionary(testFile.getAbsolutePath());
 
-        // Проверяем что 5-буквенные слова остались
-        assertTrue(dictionary.contains("ручка"));
-        assertTrue(dictionary.contains("тесто"));
+        List<String> words = dictionary.getWords();
 
-        // Проверяем что 4-буквенные слова НЕ остались
-        assertThrows(WordNotFoundInDictionaryException.class, () -> {
-            dictionary.contains("кот");
-        });
+        assertEquals(2, words.size());
+        assertTrue(words.contains("аббат"));
+        assertTrue(words.contains("банан"));
+
+        assertFalse(words.contains("кот"));
+        assertFalse(words.contains("абажур"));
+        assertFalse(words.contains("абсурд"));
 
         testFile.delete();
     }
@@ -59,15 +62,31 @@ class WordleDictionaryLoaderTest {
     @Test
     @DisplayName("Нормализация слов: нижний регистр и замена ё на е")
     void loadDictionary_NormalizesWords() {
-        String testContent = "СтОлк\nЁлка\nМёдок\n"; // Используем 5-буквенные слова
+        String testContent = "АбБаТ\nчЁлка\nЁршик\nавеню\n";
         File testFile = createTempFile(testContent);
 
         WordleDictionaryLoader loader = new WordleDictionaryLoader(testLogWriter);
         WordleDictionary dictionary = loader.loadDictionary(testFile.getAbsolutePath());
 
-        assertTrue(dictionary.contains("столк"));
-        assertTrue(dictionary.contains("елка"));
-        assertTrue(dictionary.contains("медок"));
+        assertTrue(dictionary.contains("аббат"));
+        assertTrue(dictionary.contains("челка"));
+        assertTrue(dictionary.contains("ершик"));
+        assertTrue(dictionary.contains("авеню"));
+
+        testFile.delete();
+    }
+
+    @Test
+    @DisplayName("Игнорирует строки с не-буквенными символами")
+    void loadDictionary_IgnoresNonLetterWords() {
+        String testContent = "аббат\nword\n12345\nавгит\n";
+        File testFile = createTempFile(testContent);
+
+        WordleDictionaryLoader loader = new WordleDictionaryLoader(testLogWriter);
+        WordleDictionary dictionary = loader.loadDictionary(testFile.getAbsolutePath());
+
+        assertTrue(dictionary.contains("аббат"));
+        assertTrue(dictionary.contains("авгит"));
 
         testFile.delete();
     }
@@ -99,7 +118,7 @@ class WordleDictionaryLoaderTest {
     @Test
     @DisplayName("Выбрасывает исключение при файле без 5-буквенных слов")
     void loadDictionary_NoFiveLetterWords_ThrowsException() {
-        String testContent = "кот\nслон\nдом\n";
+        String testContent = "кот\nслон\nабажур\n";
         File testFile = createTempFile(testContent);
 
         WordleDictionaryLoader loader = new WordleDictionaryLoader(testLogWriter);
@@ -107,6 +126,24 @@ class WordleDictionaryLoaderTest {
         assertThrows(WordleSystemException.class, () -> {
             loader.loadDictionary(testFile.getAbsolutePath());
         });
+
+        testFile.delete();
+    }
+
+    @Test
+    @DisplayName("Корректная обработка UTF-8 кодировки с русскими символами")
+    void loadDictionary_Utf8Encoding_PreservesRussianCharacters() {
+        String testContent = "аббат\nчёлка\nшифон\nавеню\n";
+        File testFile = createTempFile(testContent);
+
+        WordleDictionaryLoader loader = new WordleDictionaryLoader(testLogWriter);
+        WordleDictionary dictionary = loader.loadDictionary(testFile.getAbsolutePath());
+
+        assertNotNull(dictionary);
+        assertTrue(dictionary.contains("аббат"));
+        assertTrue(dictionary.contains("челка"));
+        assertTrue(dictionary.contains("шифон"));
+        assertTrue(dictionary.contains("авеню"));
 
         testFile.delete();
     }

@@ -1,6 +1,7 @@
 package ru.yandex.practicum;
 
-import java.io.*;
+import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
 import java.util.Scanner;
 
 public class Wordle {

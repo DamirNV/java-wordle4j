@@ -20,14 +20,14 @@ class WordleDictionaryTest {
         logOutput = new ByteArrayOutputStream();
         testLogWriter = new PrintWriter(new OutputStreamWriter(logOutput));
 
-        List<String> testWords = Arrays.asList("стол", "стул", "ручка", "бумага", "тесто");
+        List<String> testWords = Arrays.asList("ручка", "тесто", "баран", "сарай", "салат");
         dictionary = new WordleDictionary(testWords, testLogWriter);
     }
 
     @Test
     @DisplayName("Проверка существующего слова в словаре")
     void contains_ExistingWord_ReturnsTrue() {
-        assertTrue(dictionary.contains("стол"));
+        assertTrue(dictionary.contains("тесто"));
         assertTrue(dictionary.contains("ручка"));
     }
 
@@ -74,8 +74,8 @@ class WordleDictionaryTest {
     @Test
     @DisplayName("Нормализация ввода: нижний регистр и замена ё на е")
     void contains_NormalizesInput() {
-        assertTrue(dictionary.contains("СТОЛ"));
-        assertTrue(dictionary.contains(" СтОл "));
+        assertTrue(dictionary.contains("РУЧКА"));
+        assertTrue(dictionary.contains(" РуЧкА "));
     }
 
     @Test

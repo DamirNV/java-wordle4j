@@ -21,7 +21,7 @@ class WordleGameTest {
         logOutput = new ByteArrayOutputStream();
         testLogWriter = new PrintWriter(new OutputStreamWriter(logOutput));
 
-        List<String> testWords = Arrays.asList("стол", "стул", "ручка", "бумага", "тесто", "герой", "гонец");
+        List<String> testWords = Arrays.asList("ручка", "тесто", "баран", "сарай", "салат", "герой", "гонец");
         dictionary = new WordleDictionary(testWords, testLogWriter);
         game = new WordleGame(dictionary, testLogWriter);
     }
@@ -33,7 +33,7 @@ class WordleGameTest {
         String result = game.checkGuess(answer);
 
         assertEquals("+++++", result);
-        assertTrue(game.isWordGuessed(answer));
+        assertTrue(game.isWordGuessed());
     }
 
     @Test
@@ -51,18 +51,18 @@ class WordleGameTest {
     @Test
     @DisplayName("Уменьшение количества попыток после догадки")
     void checkGuess_DecreasesAttempts() {
-        int initialSteps = game.getSteps();
-        game.checkGuess("стол");
-        int stepsAfterGuess = game.getSteps();
+        int initialAttempts = game.getRemainingAttempts();
+        game.checkGuess("ручка");
+        int attemptsAfterGuess = game.getRemainingAttempts();
 
-        assertEquals(initialSteps - 1, stepsAfterGuess);
+        assertEquals(initialAttempts - 1, attemptsAfterGuess);
     }
 
     @Test
     @DisplayName("Игра завершается при исчерпании попыток")
     void isGameOver_AfterSixGuesses_ReturnsTrue() {
         for (int i = 0; i < 6; i++) {
-            game.checkGuess("стол");
+            game.checkGuess("ручка");
         }
 
         assertTrue(game.isGameOver());
@@ -80,15 +80,15 @@ class WordleGameTest {
         String answer = game.getAnswer();
         game.checkGuess(answer);
 
-        assertTrue(game.isWordGuessed(answer));
+        assertTrue(game.isWordGuessed());
     }
 
     @Test
     @DisplayName("Проверка неугаданного слова")
     void isWordGuessed_WrongWord_ReturnsFalse() {
-        game.checkGuess("стол");
+        game.checkGuess("ручка");
 
-        assertFalse(game.isWordGuessed("стол"));
+        assertFalse(game.isWordGuessed());
     }
 
     @Test
@@ -104,16 +104,16 @@ class WordleGameTest {
     @Test
     @DisplayName("Генерация подсказки после нескольких попыток")
     void generateHint_WithPreviousGuesses_ReturnsFilteredWord() {
-        game.checkGuess("стол");
         game.checkGuess("ручка");
+        game.checkGuess("тесто");
 
         String hint = game.generateHint();
 
         assertNotNull(hint);
         assertEquals(5, hint.length());
         assertTrue(dictionary.contains(hint));
-        assertNotEquals("стол", hint);
         assertNotEquals("ручка", hint);
+        assertNotEquals("тесто", hint);
     }
 
     @Test
@@ -128,33 +128,33 @@ class WordleGameTest {
     @DisplayName("Выбрасывает исключение при игре после завершения")
     void checkGuess_AfterGameOver_ThrowsException() {
         for (int i = 0; i < 6; i++) {
-            game.checkGuess("стол");
+            game.checkGuess("ручка");
         }
 
         assertThrows(WordleGameException.class, () -> {
-            game.checkGuess("стул");
+            game.checkGuess("тесто");
         });
     }
 
     @Test
     @DisplayName("Нормализация ввода в checkGuess")
     void checkGuess_NormalizesInput() {
-        String result = game.checkGuess(" СТОЛ ");
+        String result = game.checkGuess(" РУЧКА ");
 
         assertNotNull(result);
         assertEquals(5, result.length());
     }
 
     @Test
-    @DisplayName("Получение количества предыдущих попыток")
-    void getPreviousGuessesCount_ReturnsCorrectNumber() {
-        assertEquals(0, game.getPreviousGuessesCount());
-
-        game.checkGuess("стол");
-        assertEquals(1, game.getPreviousGuessesCount());
+    @DisplayName("Получение количества использованных попыток")
+    void getUsedAttempts_ReturnsCorrectNumber() {
+        assertEquals(0, game.getUsedAttempts());
 
         game.checkGuess("ручка");
-        assertEquals(2, game.getPreviousGuessesCount());
+        assertEquals(1, game.getUsedAttempts());
+
+        game.checkGuess("тесто");
+        assertEquals(2, game.getUsedAttempts());
     }
 
     @Test
@@ -171,5 +171,18 @@ class WordleGameTest {
         assertThrows(WordleSystemException.class, () -> {
             new WordleGame(dictionary, null);
         });
+    }
+
+    @Test
+    @DisplayName("Получение предыдущих догадок")
+    void getPreviousGuesses_ReturnsGuesses() {
+        game.checkGuess("ручка");
+        game.checkGuess("тесто");
+
+        List<String> guesses = game.getPreviousGuesses();
+
+        assertEquals(2, guesses.size());
+        assertTrue(guesses.contains("ручка"));
+        assertTrue(guesses.contains("тесто"));
     }
 }

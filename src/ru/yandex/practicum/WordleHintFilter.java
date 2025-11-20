@@ -8,39 +8,33 @@ public class WordleHintFilter {
     private final Set<Character> absentLetters = new HashSet<>();
     private final Map<Character, Integer> minLetterCounts = new HashMap<>();
 
-    public void updateFromGuess(String guess, String pattern, String answer) {
-        if (guess == null || pattern == null || answer == null) return;
+    public void updateFromGuess(String guess, String pattern) {
+        Map<Character, Integer> confirmed = new HashMap<>();
+        correctPositions.clear();
 
-        Map<Character, Integer> letterCountsInGuess = new HashMap<>();
-        Map<Character, Integer> confirmedCounts = new HashMap<>();
-
-        for (int i = 0; i < pattern.length(); i++) {
-            char guessChar = guess.charAt(i);
-            char patternChar = pattern.charAt(i);
-
-            letterCountsInGuess.put(guessChar, letterCountsInGuess.getOrDefault(guessChar, 0) + 1);
-
-            switch (patternChar) {
-                case '+':
-                    correctPositions.put(i, guessChar);
-                    presentLetters.add(guessChar);
-                    absentLetters.remove(guessChar);
-                    confirmedCounts.put(guessChar, confirmedCounts.getOrDefault(guessChar, 0) + 1);
-                    break;
-                case '^':
-                    presentLetters.add(guessChar);
-                    absentLetters.remove(guessChar);
-                    confirmedCounts.put(guessChar, confirmedCounts.getOrDefault(guessChar, 0) + 1);
-                    break;
-                case '-':
-                    if (!presentLetters.contains(guessChar)) {
-                        absentLetters.add(guessChar);
-                    }
-                    break;
+        for (int i = 0; i < 5; i++) {
+            char c = guess.charAt(i);
+            char p = pattern.charAt(i);
+            if (p == '+') {
+                correctPositions.put(i, c);
+                confirmed.put(c, confirmed.getOrDefault(c, 0) + 1);
+                presentLetters.add(c);
+            } else if (p == '^') {
+                confirmed.put(c, confirmed.getOrDefault(c, 0) + 1);
+                presentLetters.add(c);
             }
         }
 
-        for (Map.Entry<Character, Integer> entry : confirmedCounts.entrySet()) {
+        Set<Character> allGuessedLetters = new HashSet<>();
+        for (char c : guess.toCharArray()) allGuessedLetters.add(c);
+
+        for (char c : allGuessedLetters) {
+            if (!confirmed.containsKey(c)) {
+                absentLetters.add(c);
+            }
+        }
+
+        for (Map.Entry<Character, Integer> entry : confirmed.entrySet()) {
             char letter = entry.getKey();
             int count = entry.getValue();
             minLetterCounts.put(letter, Math.max(minLetterCounts.getOrDefault(letter, 0), count));
@@ -51,27 +45,16 @@ public class WordleHintFilter {
         if (word == null || word.length() != 5) return false;
 
         for (Map.Entry<Integer, Character> entry : correctPositions.entrySet()) {
-            int position = entry.getKey();
-            char expectedChar = entry.getValue();
-            if (word.charAt(position) != expectedChar) {
-                return false;
-            }
+            if (word.charAt(entry.getKey()) != entry.getValue()) return false;
         }
 
-        for (char absentChar : absentLetters) {
-            if (word.indexOf(absentChar) != -1) {
-                return false;
-            }
+        for (char c : absentLetters) {
+            if (word.indexOf(c) != -1) return false;
         }
 
-        for (char presentChar : presentLetters) {
-            if (word.indexOf(presentChar) == -1) {
-                return false;
-            }
-            int minCount = minLetterCounts.getOrDefault(presentChar, 1);
-            if (countOccurrences(word, presentChar) < minCount) {
-                return false;
-            }
+        for (char c : presentLetters) {
+            if (word.indexOf(c) == -1) return false;
+            if (countOccurrences(word, c) < minLetterCounts.getOrDefault(c, 1)) return false;
         }
 
         return true;
@@ -79,9 +62,7 @@ public class WordleHintFilter {
 
     private int countOccurrences(String word, char character) {
         int count = 0;
-        for (char c : word.toCharArray()) {
-            if (c == character) count++;
-        }
+        for (char c : word.toCharArray()) if (c == character) count++;
         return count;
     }
 
@@ -96,15 +77,7 @@ public class WordleHintFilter {
         return sb.toString();
     }
 
-    public Set<Character> getPresentLetters() {
-        return new HashSet<>(presentLetters);
-    }
-
-    public Set<Character> getAbsentLetters() {
-        return new HashSet<>(absentLetters);
-    }
-
-    public Map<Character, Integer> getMinLetterCounts() {
-        return new HashMap<>(minLetterCounts);
-    }
+    public Set<Character> getPresentLetters() { return new HashSet<>(presentLetters); }
+    public Set<Character> getAbsentLetters() { return new HashSet<>(absentLetters); }
+    public Map<Character, Integer> getMinLetterCounts() { return new HashMap<>(minLetterCounts); }
 }

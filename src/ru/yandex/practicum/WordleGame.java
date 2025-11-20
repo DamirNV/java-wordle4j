@@ -42,16 +42,17 @@ public class WordleGame {
         }
 
         String normalizedGuess = normalizeWord(guess);
+        if (!dictionary.contains(normalizedGuess)) {
+            throw new WordNotFoundInDictionaryException(normalizedGuess);
+        }
+
         previousGuesses.add(normalizedGuess);
-
         String result = generateHintPattern(normalizedGuess);
-
         remainingAttempts--;
 
-        hintFilter.updateFromGuess(normalizedGuess, result, answer);
+        hintFilter.updateFromGuess(normalizedGuess, result);
 
         logWriter.println("Проверка слова: " + normalizedGuess + " -> " + result + " (осталось попыток: " + remainingAttempts + ")");
-
         return result;
     }
 
@@ -60,35 +61,25 @@ public class WordleGame {
     }
 
     public boolean isWordGuessed() {
-        if (previousGuesses.isEmpty()) {
-            return false;
-        }
-        String lastGuess = previousGuesses.get(previousGuesses.size() - 1);
-        return generateHintPattern(lastGuess).equals("+++++");
+        if (previousGuesses.isEmpty()) return false;
+        return generateHintPattern(previousGuesses.get(previousGuesses.size() - 1)).equals("+++++");
     }
 
     public String generateHint() {
         logHintFilterState();
-
         List<String> possibleWords = dictionary.getFilteredWords(hintFilter);
-
         possibleWords.removeAll(previousGuesses);
 
         if (possibleWords.isEmpty()) {
-            String fallbackHint = getRandomWordExcludingUsed();
-            logWriter.println("Fallback подсказка: " + fallbackHint);
-            return fallbackHint;
+            return getRandomWordExcludingUsed();
         }
 
-        String bestHint = selectBestHint(possibleWords);
-        logWriter.println("Лучшая подсказка: " + bestHint);
-        return bestHint;
+        return selectBestHint(possibleWords);
     }
 
     private String selectBestHint(List<String> possibleWords) {
         if (possibleWords.size() <= 3) {
-            Random random = new Random();
-            return possibleWords.get(random.nextInt(possibleWords.size()));
+            return possibleWords.get(new Random().nextInt(possibleWords.size()));
         }
 
         String bestWord = possibleWords.get(0);
@@ -101,18 +92,14 @@ public class WordleGame {
                 maxNewLetters = newLettersCount;
             }
         }
-
         return bestWord;
     }
 
     private int countNewLetters(String word) {
         Set<Character> usedLetters = getAllUsedLetters();
         int newLetters = 0;
-
         for (char c : word.toCharArray()) {
-            if (!usedLetters.contains(c)) {
-                newLetters++;
-            }
+            if (!usedLetters.contains(c)) newLetters++;
         }
         return newLetters;
     }
@@ -128,35 +115,27 @@ public class WordleGame {
     }
 
     private String generateHintPattern(String guess) {
-        if (!guess.equals(answer) && guess.length() != 5) {
-            return "-----";
-        }
-
         char[] result = new char[5];
-        Map<Character, Integer> availableCounts = new HashMap<>();
+        Arrays.fill(result, '-');
+        char[] answerChars = answer.toCharArray();
+        boolean[] used = new boolean[5];
 
         for (int i = 0; i < 5; i++) {
-            char answerChar = answer.charAt(i);
-            if (guess.charAt(i) != answerChar) {
-                availableCounts.put(answerChar, availableCounts.getOrDefault(answerChar, 0) + 1);
-            }
-        }
-
-        for (int i = 0; i < 5; i++) {
-            if (guess.charAt(i) == answer.charAt(i)) {
+            if (guess.charAt(i) == answerChars[i]) {
                 result[i] = '+';
-            } else {
-                result[i] = '-';
+                used[i] = true;
             }
         }
 
         for (int i = 0; i < 5; i++) {
             if (result[i] == '+') continue;
-
             char guessChar = guess.charAt(i);
-            if (availableCounts.getOrDefault(guessChar, 0) > 0) {
-                result[i] = '^';
-                availableCounts.put(guessChar, availableCounts.get(guessChar) - 1);
+            for (int j = 0; j < 5; j++) {
+                if (!used[j] && answerChars[j] == guessChar) {
+                    result[i] = '^';
+                    used[j] = true;
+                    break;
+                }
             }
         }
 
@@ -177,33 +156,16 @@ public class WordleGame {
     private String getRandomWordExcludingUsed() {
         List<String> allWords = new ArrayList<>(dictionary.getWords());
         allWords.removeAll(previousGuesses);
-
-        if (allWords.isEmpty()) {
-            logWriter.println("Все слова использованы, возвращаем случайное слово");
-            return dictionary.getRandomWord();
-        }
-
-        Random random = new Random();
-        return allWords.get(random.nextInt(allWords.size()));
+        if (allWords.isEmpty()) return dictionary.getRandomWord();
+        return allWords.get(new Random().nextInt(allWords.size()));
     }
 
     private String normalizeWord(String word) {
         return word.toLowerCase().replace('ё', 'е').trim();
     }
 
-    public String getAnswer() {
-        return answer;
-    }
-
-    public int getRemainingAttempts() {
-        return remainingAttempts;
-    }
-
-    public int getUsedAttempts() {
-        return 6 - remainingAttempts;
-    }
-
-    public List<String> getPreviousGuesses() {
-        return new ArrayList<>(previousGuesses);
-    }
+    public String getAnswer() { return answer; }
+    public int getRemainingAttempts() { return remainingAttempts; }
+    public int getUsedAttempts() { return 6 - remainingAttempts; }
+    public List<String> getPreviousGuesses() { return new ArrayList<>(previousGuesses); }
 }
