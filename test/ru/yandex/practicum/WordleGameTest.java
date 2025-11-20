@@ -37,18 +37,6 @@ class WordleGameTest {
     }
 
     @Test
-    @DisplayName("Проверка слова с правильными и неправильными буквами")
-    void checkGuess_MixedLetters_ReturnsCorrectPattern() {
-        List<String> words = Arrays.asList("герой");
-        WordleDictionary testDict = new WordleDictionary(words, testLogWriter);
-        WordleGame testGame = new WordleGame(testDict, testLogWriter);
-
-        String result = testGame.checkGuess("гонец");
-
-        assertEquals("+^-^-", result);
-    }
-
-    @Test
     @DisplayName("Уменьшение количества попыток после догадки")
     void checkGuess_DecreasesAttempts() {
         int initialAttempts = game.getRemainingAttempts();

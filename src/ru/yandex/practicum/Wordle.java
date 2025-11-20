@@ -1,7 +1,6 @@
 package ru.yandex.practicum;
 
 import java.io.PrintWriter;
-import java.io.UnsupportedEncodingException;
 import java.util.Scanner;
 
 public class Wordle {
@@ -55,9 +54,7 @@ public class Wordle {
             System.out.println("   '-' - буквы нет в слове");
             System.out.println("💡 Нажмите Enter для подсказки");
 
-            boolean gameWon = false;
-
-            while (!game.isGameOver() && !gameWon) {
+            while (!game.isGameOver()) {
                 System.out.println("\n➡️ Осталось попыток: " + game.getRemainingAttempts());
                 System.out.print("Ваше слово: ");
                 String input = scanner.nextLine();
@@ -92,7 +89,7 @@ public class Wordle {
                     if (game.isWordGuessed()) {
                         System.out.println("\n🎉 ПОЗДРАВЛЯЕМ! Вы угадали слово!");
                         logWriter.println("Игра выиграна! Слово: " + normalizedGuess);
-                        gameWon = true;
+                        break;
                     }
 
                 } catch (WordNotFoundInDictionaryException e) {
@@ -101,7 +98,7 @@ public class Wordle {
                 }
             }
 
-            if (!gameWon) {
+            if (!game.isWordGuessed()) {
                 System.out.println("\n💀 ИГРА ОКОНЧЕНА!");
                 System.out.println("Загаданное слово было: " + game.getAnswer());
                 logWriter.println("Игра проиграна. Загаданное слово: " + game.getAnswer());

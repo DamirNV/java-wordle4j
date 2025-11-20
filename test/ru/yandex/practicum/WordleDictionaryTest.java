@@ -33,42 +33,28 @@ class WordleDictionaryTest {
 
     @Test
     @DisplayName("Проверка отсутствующего слова в словаре")
-    void contains_NonExistingWord_ThrowsException() {
-        assertThrows(WordNotFoundInDictionaryException.class, () -> {
-            dictionary.contains("компьютер");
-        });
+    void contains_NonExistingWord_ReturnsFalse() {
+        assertFalse(dictionary.contains("компьютер"));
     }
 
     @Test
     @DisplayName("Проверка слова с неправильной длиной")
-    void contains_WordWithWrongLength_ThrowsException() {
-        assertThrows(WordNotFoundInDictionaryException.class, () -> {
-            dictionary.contains("кот");
-        });
-
-        assertThrows(WordNotFoundInDictionaryException.class, () -> {
-            dictionary.contains("длинноеслово");
-        });
+    void contains_WordWithWrongLength_ReturnsFalse() {
+        assertFalse(dictionary.contains("кот"));
+        assertFalse(dictionary.contains("длинноеслово"));
     }
 
     @Test
     @DisplayName("Проверка null слова")
-    void contains_NullWord_ThrowsException() {
-        assertThrows(WordNotFoundInDictionaryException.class, () -> {
-            dictionary.contains(null);
-        });
+    void contains_NullWord_ReturnsFalse() {
+        assertFalse(dictionary.contains(null));
     }
 
     @Test
     @DisplayName("Проверка пустой строки")
-    void contains_EmptyWord_ThrowsException() {
-        assertThrows(WordNotFoundInDictionaryException.class, () -> {
-            dictionary.contains("");
-        });
-
-        assertThrows(WordNotFoundInDictionaryException.class, () -> {
-            dictionary.contains("   ");
-        });
+    void contains_EmptyWord_ReturnsFalse() {
+        assertFalse(dictionary.contains(""));
+        assertFalse(dictionary.contains("   "));
     }
 
     @Test

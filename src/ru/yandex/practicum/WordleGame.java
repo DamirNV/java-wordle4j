@@ -62,19 +62,26 @@ public class WordleGame {
 
     public boolean isWordGuessed() {
         if (previousGuesses.isEmpty()) return false;
-        return generateHintPattern(previousGuesses.get(previousGuesses.size() - 1)).equals("+++++");
+        String lastGuess = previousGuesses.get(previousGuesses.size() - 1);
+        return generateHintPattern(lastGuess).equals("+++++");
     }
 
     public String generateHint() {
         logHintFilterState();
         List<String> possibleWords = dictionary.getFilteredWords(hintFilter);
-        possibleWords.removeAll(previousGuesses);
 
-        if (possibleWords.isEmpty()) {
+        List<String> availableWords = new ArrayList<>();
+        for (String word : possibleWords) {
+            if (!previousGuesses.contains(word)) {
+                availableWords.add(word);
+            }
+        }
+
+        if (availableWords.isEmpty()) {
             return getRandomWordExcludingUsed();
         }
 
-        return selectBestHint(possibleWords);
+        return selectBestHint(availableWords);
     }
 
     private String selectBestHint(List<String> possibleWords) {
@@ -85,7 +92,8 @@ public class WordleGame {
         String bestWord = possibleWords.get(0);
         int maxNewLetters = countNewLetters(bestWord);
 
-        for (String word : possibleWords) {
+        for (int i = 1; i < Math.min(possibleWords.size(), 100); i++) {
+            String word = possibleWords.get(i);
             int newLettersCount = countNewLetters(word);
             if (newLettersCount > maxNewLetters) {
                 bestWord = word;
@@ -118,22 +126,24 @@ public class WordleGame {
         char[] result = new char[5];
         Arrays.fill(result, '-');
         char[] answerChars = answer.toCharArray();
-        boolean[] used = new boolean[5];
+        boolean[] correctUsed = new boolean[5];
+        boolean[] presentUsed = new boolean[5];
 
         for (int i = 0; i < 5; i++) {
             if (guess.charAt(i) == answerChars[i]) {
                 result[i] = '+';
-                used[i] = true;
+                correctUsed[i] = true;
             }
         }
 
         for (int i = 0; i < 5; i++) {
             if (result[i] == '+') continue;
+
             char guessChar = guess.charAt(i);
             for (int j = 0; j < 5; j++) {
-                if (!used[j] && answerChars[j] == guessChar) {
+                if (!correctUsed[j] && !presentUsed[j] && answerChars[j] == guessChar) {
                     result[i] = '^';
-                    used[j] = true;
+                    presentUsed[j] = true;
                     break;
                 }
             }
@@ -150,14 +160,24 @@ public class WordleGame {
         state.append("   Присутствующие буквы: ").append(hintFilter.getPresentLetters()).append("\n");
         state.append("   Отсутствующие буквы: ").append(hintFilter.getAbsentLetters()).append("\n");
         state.append("   Минимальные количества букв: ").append(hintFilter.getMinLetterCounts());
-        logWriter.println(state.toString());
+        logWriter.println(state);
     }
 
     private String getRandomWordExcludingUsed() {
-        List<String> allWords = new ArrayList<>(dictionary.getWords());
-        allWords.removeAll(previousGuesses);
-        if (allWords.isEmpty()) return dictionary.getRandomWord();
-        return allWords.get(new Random().nextInt(allWords.size()));
+        List<String> allWords = dictionary.getWords();
+        List<String> availableWords = new ArrayList<>();
+
+        for (String word : allWords) {
+            if (!previousGuesses.contains(word)) {
+                availableWords.add(word);
+            }
+        }
+
+        if (availableWords.isEmpty()) {
+            return allWords.get(new Random().nextInt(allWords.size()));
+        }
+
+        return availableWords.get(new Random().nextInt(availableWords.size()));
     }
 
     private String normalizeWord(String word) {

@@ -3,7 +3,8 @@ package ru.yandex.practicum;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 public class WordleDictionaryLoader {
 
@@ -26,7 +27,7 @@ public class WordleDictionaryLoader {
             throw new WordleSystemException("Файл словаря не найден: " + filename);
         }
 
-        List<String> words = new ArrayList<>();
+        Set<String> uniqueWords = new HashSet<>();
         logWriter.println("Загрузка словаря из файла: " + filename);
 
         try (BufferedReader reader = new BufferedReader(
@@ -37,17 +38,16 @@ public class WordleDictionaryLoader {
 
             while ((line = reader.readLine()) != null) {
                 String formattedWord = formatWord(line.trim());
-                if (formattedWord.length() == 5) {
-                    words.add(formattedWord);
+                if (formattedWord.length() == 5 && uniqueWords.add(formattedWord)) {
                     loadedWords++;
                 }
             }
 
-            if (words.isEmpty()) {
+            if (uniqueWords.isEmpty()) {
                 throw new WordleSystemException("Словарь пуст или не содержит 5-буквенных слов");
             }
 
-            logWriter.println("Успешно загружено " + loadedWords + " слов");
+            logWriter.println("Успешно загружено " + loadedWords + " уникальных слов");
 
         } catch (FileNotFoundException e) {
             throw new WordleSystemException("Файл словаря не найден: " + filename, e);
@@ -55,7 +55,7 @@ public class WordleDictionaryLoader {
             throw new WordleSystemException("Ошибка чтения файла словаря: " + e.getMessage(), e);
         }
 
-        return new WordleDictionary(words, logWriter);
+        return new WordleDictionary(new ArrayList<>(uniqueWords), logWriter);
     }
 
     private String formatWord(String word) {
