@@ -1,17 +1,21 @@
 package ru.yandex.practicum;
 
-import java.io.BufferedReader;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
 public class WordleDictionaryLoader {
+    private PrintWriter logWriter;
+
+    public WordleDictionaryLoader(PrintWriter logWriter) {
+        this.logWriter = logWriter;
+    }
 
     public WordleDictionary loadDictionary(String filename) {
         List<String> words = new ArrayList<>();
+        logWriter.println("Загрузка словаря из файла: " + filename);
+
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(filename),
                 StandardCharsets.UTF_8))) {
             String line;
@@ -27,7 +31,8 @@ public class WordleDictionaryLoader {
         } catch (IOException e) {
             throw new WordleGameException("Ошибка загрузки файла: " + e.getMessage());
         }
-        return new WordleDictionary(words);
+        logWriter.println("Успешно загружено " + words.size() + " слов");
+        return new WordleDictionary(words, logWriter);
     }
 
     private String formatWord(String word) {

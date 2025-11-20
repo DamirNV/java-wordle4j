@@ -1,5 +1,6 @@
 package ru.yandex.practicum;
 
+import java.io.PrintWriter;
 import java.util.*;
 
 public class WordleGame {
@@ -7,6 +8,7 @@ public class WordleGame {
     private String answer;
     private int steps;
     private WordleDictionary dictionary;
+    private PrintWriter logWriter;
 
     private List<String> previousGuesses = new ArrayList<>();
     private Map<Integer, Character> correctPositions = new HashMap<>();
@@ -14,10 +16,12 @@ public class WordleGame {
     private Set<Character> absentLetters = new HashSet<>();
     private Set<Character> triedLetters = new HashSet<>();
 
-    public WordleGame(WordleDictionary dictionary) {
+    public WordleGame(WordleDictionary dictionary, PrintWriter logWriter) {
         this.answer = dictionary.getRandomWord();
         this.steps = 6;
         this.dictionary = dictionary;
+        this.logWriter = logWriter;
+        logWriter.println("Игра создана, загаданное слово: " + answer);
     }
 
     public String checkGuess(String guess) {
@@ -50,21 +54,38 @@ public class WordleGame {
 
     private void analyzeGuessForHints(String guess) {
         String pattern = generateHint(guess);
+        Map<Character, Integer> availableInAnswer = new HashMap<>();
+        for (char c : answer.toCharArray()) {
+            availableInAnswer.put(c, availableInAnswer.getOrDefault(c, 0) + 1);
+        }
         for (int i = 0; i < pattern.length(); i++) {
             char currentChar = guess.charAt(i);
             triedLetters.add(currentChar);
+            if (pattern.charAt(i) == '+') {
+                correctPositions.put(i, currentChar);
+                presentLetters.add(currentChar);
+                absentLetters.remove(currentChar);
+                availableInAnswer.put(currentChar, availableInAnswer.get(currentChar) - 1);
+            }
+        }
+        for (int i = 0; i < pattern.length(); i++) {
+            if (pattern.charAt(i) == '+') continue;
+            char currentChar = guess.charAt(i);
             switch (pattern.charAt(i)) {
-                case '+':
-                    correctPositions.put(i, currentChar);
-                    presentLetters.add(currentChar);
-                    absentLetters.remove(currentChar);
-                    break;
                 case '^':
-                    presentLetters.add(currentChar);
-                    absentLetters.remove(currentChar);
+                    if (availableInAnswer.getOrDefault(currentChar, 0) > 0) {
+                        presentLetters.add(currentChar);
+                        absentLetters.remove(currentChar);
+                        availableInAnswer.put(currentChar, availableInAnswer.get(currentChar) - 1);
+                    } else {
+                        if (!presentLetters.contains(currentChar)) {
+                            absentLetters.add(currentChar);
+                        }
+                    }
                     break;
                 case '-':
-                    if (!presentLetters.contains(currentChar)) {
+                    if (!presentLetters.contains(currentChar) &&
+                            !availableInAnswer.containsKey(currentChar)) {
                         absentLetters.add(currentChar);
                     }
                     break;

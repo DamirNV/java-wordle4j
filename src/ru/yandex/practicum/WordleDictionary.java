@@ -1,5 +1,6 @@
 package ru.yandex.practicum;
 
+import java.io.PrintWriter;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Random;
@@ -8,13 +9,17 @@ public class WordleDictionary {
 
     private List<String> words;
     private Random random;
+    private PrintWriter logWriter;
 
-    public WordleDictionary(List<String> words) {
+    public WordleDictionary(List<String> words, PrintWriter logWriter) {
         this.words = new ArrayList<>(words);
         this.random = new Random();
+        this.logWriter = logWriter;
+        logWriter.println("Словарь создан, слов: " + words.size());
     }
 
     public boolean contains(String word) {
+        logWriter.println("Проверка слова в словаре: " + word);
         if (word == null || word.trim().isEmpty()) {
             throw new WordNotFoundInDictionaryException("Пустая строка");
         }

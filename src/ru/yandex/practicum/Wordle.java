@@ -19,11 +19,11 @@ public class Wordle {
 
         try {
             logWriter.println("Запуск игры Wordle");
-            WordleDictionaryLoader loader = new WordleDictionaryLoader();
+            WordleDictionaryLoader loader = new WordleDictionaryLoader(logWriter);
             WordleDictionary dictionary = loader.loadDictionary("words_ru.txt");
             logWriter.println("Словарь загружен, слов: " + dictionary.getWords().size());
 
-            WordleGame game = new WordleGame(dictionary);
+            WordleGame game = new WordleGame(dictionary, logWriter);
             logWriter.println("Игра создана, загаданное слово: " + game.getAnswer());
 
             System.out.println("🎯 Добро пожаловать в Wordle!");
