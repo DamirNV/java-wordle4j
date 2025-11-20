@@ -45,7 +45,7 @@ class WordleGameTest {
 
         String result = testGame.checkGuess("гонец");
 
-        assertEquals("+^-^-", result); // г=+, о=-, н=-, е=^, ц=-
+        assertEquals("+^-^-", result);
     }
 
     @Test
@@ -112,7 +112,6 @@ class WordleGameTest {
         assertNotNull(hint);
         assertEquals(5, hint.length());
         assertTrue(dictionary.contains(hint));
-        // Подсказка не должна быть одним из использованных слов
         assertNotEquals("стол", hint);
         assertNotEquals("ручка", hint);
     }

@@ -6,7 +6,6 @@ import org.junit.jupiter.api.DisplayName;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.io.PrintWriter;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -23,15 +22,15 @@ class WordleDictionaryLoaderTest {
     @Test
     @DisplayName("Загрузка словаря из существующего файла")
     void loadDictionary_ValidFile_ReturnsDictionary() {
-        String testContent = "стол\nстул\nручка\nбумага\nтесто\n";
+        String testContent = "ручка\nбумага\nтесто\nслово\n";
         File testFile = createTempFile(testContent);
 
         WordleDictionaryLoader loader = new WordleDictionaryLoader(testLogWriter);
         WordleDictionary dictionary = loader.loadDictionary(testFile.getAbsolutePath());
 
         assertNotNull(dictionary);
-        assertTrue(dictionary.contains("стол"));
         assertTrue(dictionary.contains("ручка"));
+        assertTrue(dictionary.contains("слово"));
 
         testFile.delete();
     }
@@ -45,9 +44,10 @@ class WordleDictionaryLoaderTest {
         WordleDictionaryLoader loader = new WordleDictionaryLoader(testLogWriter);
         WordleDictionary dictionary = loader.loadDictionary(testFile.getAbsolutePath());
 
-        assertTrue(dictionary.contains("стол"));    // 4 буквы - должно быть исключено
-        assertTrue(dictionary.contains("ручка"));   // 5 букв - должно остаться
-        assertTrue(dictionary.contains("тесто"));   // 5 букв - должно остаться
+        assertFalse(dictionary.contains("стол"));
+        assertFalse(dictionary.contains("стул"));
+        assertTrue(dictionary.contains("ручка"));
+        assertTrue(dictionary.contains("тесто"));
 
         testFile.delete();
     }
@@ -55,15 +55,16 @@ class WordleDictionaryLoaderTest {
     @Test
     @DisplayName("Нормализация слов: нижний регистр и замена ё на е")
     void loadDictionary_NormalizesWords() {
-        String testContent = "СтОл\nЁлка\nМёд\n";
+        String testContent = "Ручка\nЁлка\nМёд\nСлово\n";
         File testFile = createTempFile(testContent);
 
         WordleDictionaryLoader loader = new WordleDictionaryLoader(testLogWriter);
         WordleDictionary dictionary = loader.loadDictionary(testFile.getAbsolutePath());
 
-        assertTrue(dictionary.contains("стол"));
+        assertTrue(dictionary.contains("ручка"));
         assertTrue(dictionary.contains("елка"));
         assertTrue(dictionary.contains("мед"));
+        assertTrue(dictionary.contains("слово"));
 
         testFile.delete();
     }
