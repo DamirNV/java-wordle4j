@@ -42,14 +42,57 @@ public class WordleGame {
 
     public String generateHint() {
         if (previousGuesses.isEmpty()) {
+            String randomHint = getRandomWordExcludingUsed();
+            logWriter.println("Первая подсказка: " + randomHint);
+            return randomHint;
+        }
+        logWriter.println("Генерация подсказки на основе " + previousGuesses.size() + " попыток");
+        logWriter.println("Известные позиции: " + correctPositions);
+        logWriter.println("Присутствующие буквы: " + presentLetters);
+        logWriter.println("Отсутствующие буквы: " + absentLetters);
+        List<String> allWords = dictionary.getWords();
+        logWriter.println("Всего слов в словаре: " + allWords.size());
+        List<String> possibleWords = filterWordsByKnownConditions(allWords);
+        logWriter.println("Подходящих слов найдено: " + possibleWords.size());
+        if (!possibleWords.isEmpty()) {
+            String bestHint = findBestHint(possibleWords);
+            logWriter.println("Лучшая подсказка: " + bestHint);
+            return bestHint;
+        }
+        String fallbackHint = getRandomWordExcludingUsed();
+        logWriter.println("Fallback подсказка: " + fallbackHint);
+        return fallbackHint;
+    }
+
+    private String findBestHint(List<String> possibleWords) {
+        if (possibleWords.isEmpty()) {
             return getRandomWordExcludingUsed();
         }
-        List<String> allWords = new ArrayList<>(dictionary.getWords());
-        List<String> possibleWords = filterWordsByKnownConditions(allWords);
-        if (!possibleWords.isEmpty()) {
-            return getRandomWordFromList(possibleWords);
+        if (possibleWords.size() <= 3) {
+            Random random = new Random();
+            return possibleWords.get(random.nextInt(possibleWords.size()));
         }
-        return getRandomWordExcludingUsed();
+        String bestWord = possibleWords.get(0);
+        int maxNewLetters = countNewLetters(bestWord);
+        for (String word : possibleWords) {
+            int newLettersCount = countNewLetters(word);
+            if (newLettersCount > maxNewLetters) {
+                bestWord = word;
+                maxNewLetters = newLettersCount;
+            }
+        }
+        logWriter.println("Выбрано слово с " + maxNewLetters + " новыми буквами: " + bestWord);
+        return bestWord;
+    }
+
+    private int countNewLetters(String word) {
+        int newLetters = 0;
+        for (char c : word.toCharArray()) {
+            if (!triedLetters.contains(c)) {
+                newLetters++;
+            }
+        }
+        return newLetters;
     }
 
     private void analyzeGuessForHints(String guess) {
@@ -139,11 +182,9 @@ public class WordleGame {
     private String getRandomWordExcludingUsed() {
         List<String> allWords = new ArrayList<>(dictionary.getWords());
         allWords.removeAll(previousGuesses);
-
         if (allWords.isEmpty()) {
             return dictionary.getRandomWord();
         }
-
         Random random = new Random();
         return allWords.get(random.nextInt(allWords.size()));
     }
