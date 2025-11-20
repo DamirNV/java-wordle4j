@@ -9,36 +9,47 @@ public class WordleDictionaryLoader {
     private PrintWriter logWriter;
 
     public WordleDictionaryLoader(PrintWriter logWriter) {
+        if (logWriter == null) {
+            throw new WordleSystemException("Логгер не может быть null");
+        }
         this.logWriter = logWriter;
     }
 
     public WordleDictionary loadDictionary(String filename) {
+        if (filename == null || filename.trim().isEmpty()) {
+            throw new WordleSystemException("Имя файла не может быть пустым");
+        }
+
         List<String> words = new ArrayList<>();
         logWriter.println("Загрузка словаря из файла: " + filename);
 
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(filename),
-                StandardCharsets.UTF_8))) {
+        try (BufferedReader reader = new BufferedReader(
+                new InputStreamReader(new FileInputStream(filename), StandardCharsets.UTF_8))) {
             String line;
+            int loadedWords = 0;
             while ((line = reader.readLine()) != null) {
                 String formattedWord = formatWord(line.trim());
                 if (formattedWord.length() == 5) {
                     words.add(formattedWord);
+                    loadedWords++;
                 }
             }
             if (words.isEmpty()) {
-                throw new WordleGameException("Словарь пуст или не содержит 5-буквенных слов");
+                throw new WordleSystemException("Словарь пуст или не содержит 5-буквенных слов");
             }
+            logWriter.println("Успешно загружено " + loadedWords + " слов");
+        } catch (FileNotFoundException e) {
+            throw new WordleSystemException("Файл словаря не найден: " + filename, e);
         } catch (IOException e) {
-            throw new WordleGameException("Ошибка загрузки файла: " + e.getMessage());
+            throw new WordleSystemException("Ошибка чтения файла словаря: " + e.getMessage(), e);
         }
-        logWriter.println("Успешно загружено " + words.size() + " слов");
         return new WordleDictionary(words, logWriter);
     }
 
     private String formatWord(String word) {
+        if (word == null) return "";
         return word.toLowerCase()
                 .replace('ё', 'е')
                 .trim();
     }
-
 }
