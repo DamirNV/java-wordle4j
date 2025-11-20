@@ -209,10 +209,22 @@ public class WordleGame {
             }
         }
 
-        analysisLog.append(" [Результат: correctPositions=").append(correctPositions)
-                .append(", presentLetters=").append(presentLetters)
-                .append(", absentLetters=").append(absentLetters).append("]");
-        logWriter.println(analysisLog.toString());
+        analysisLog.append("\n   Результат анализа:\n");
+        analysisLog.append("      Правильные позиции: ").append(formatPositions(correctPositions)).append("\n");
+        analysisLog.append("      Присутствуют: ").append(presentLetters).append("\n");
+        analysisLog.append("      Отсутствуют: ").append(absentLetters);
+        logWriter.println(analysisLog);
+    }
+
+    private String formatPositions(Map<Integer, Character> positions) {
+        if (positions.isEmpty()) return "нет";
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < 5; i++) {
+            if (positions.containsKey(i)) {
+                sb.append("поз.").append(i).append("=").append(positions.get(i)).append(" ");
+            }
+        }
+        return sb.toString();
     }
 
     private List<String> filterWordsByKnownConditions(List<String> words) {
