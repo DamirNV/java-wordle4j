@@ -1,11 +1,12 @@
 package ru.yandex.practicum;
 
 import java.io.PrintWriter;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
 public class WordleDictionary {
+
     private List<String> words;
     private Random random;
     private PrintWriter logWriter;

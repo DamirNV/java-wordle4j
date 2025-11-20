@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class WordleDictionaryLoader {
+
     private PrintWriter logWriter;
 
     public WordleDictionaryLoader(PrintWriter logWriter) {
@@ -25,8 +26,10 @@ public class WordleDictionaryLoader {
 
         try (BufferedReader reader = new BufferedReader(
                 new InputStreamReader(new FileInputStream(filename), StandardCharsets.UTF_8))) {
+
             String line;
             int loadedWords = 0;
+
             while ((line = reader.readLine()) != null) {
                 String formattedWord = formatWord(line.trim());
                 if (formattedWord.length() == 5) {
@@ -34,20 +37,26 @@ public class WordleDictionaryLoader {
                     loadedWords++;
                 }
             }
+
             if (words.isEmpty()) {
                 throw new WordleSystemException("Словарь пуст или не содержит 5-буквенных слов");
             }
+
             logWriter.println("Успешно загружено " + loadedWords + " слов");
+
         } catch (FileNotFoundException e) {
             throw new WordleSystemException("Файл словаря не найден: " + filename, e);
         } catch (IOException e) {
             throw new WordleSystemException("Ошибка чтения файла словаря: " + e.getMessage(), e);
         }
+
         return new WordleDictionary(words, logWriter);
     }
 
     private String formatWord(String word) {
-        if (word == null) return "";
+        if (word == null) {
+            return "";
+        }
         return word.toLowerCase()
                 .replace('ё', 'е')
                 .trim();

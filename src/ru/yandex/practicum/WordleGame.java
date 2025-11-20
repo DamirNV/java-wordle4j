@@ -4,6 +4,7 @@ import java.io.PrintWriter;
 import java.util.*;
 
 public class WordleGame {
+
     private String answer;
     private int steps;
     private WordleDictionary dictionary;
@@ -58,7 +59,9 @@ public class WordleGame {
     }
 
     public boolean isWordGuessed(String lastGuess) {
-        if (lastGuess == null) return false;
+        if (lastGuess == null) {
+            return false;
+        }
         return generateHint(lastGuess).equals("+++++");
     }
 
@@ -87,12 +90,28 @@ public class WordleGame {
 
     private void logMessageWithState(String message) {
         StringBuilder state = new StringBuilder();
-        state.append(message)
-                .append(" [Попытки: ").append(previousGuesses.size())
-                .append(", Правильные позиции: ").append(correctPositions)
-                .append(", Присутствующие буквы: ").append(presentLetters)
-                .append(", Отсутствующие буквы: ").append(absentLetters)
-                .append("]");
+        state.append("=== ").append(message).append(" ===\n");
+        state.append("   Попытки: ").append(previousGuesses.size()).append("\n");
+
+        if (!correctPositions.isEmpty()) {
+            state.append("   Известные позиции: ");
+            for (int i = 0; i < 5; i++) {
+                if (correctPositions.containsKey(i)) {
+                    state.append(i).append("=").append(correctPositions.get(i)).append(" ");
+                }
+            }
+            state.append("\n");
+        }
+
+        if (!presentLetters.isEmpty()) {
+            state.append("   Есть в слове: ").append(presentLetters).append("\n");
+        }
+
+        if (!absentLetters.isEmpty()) {
+            state.append("   Отсутствуют: ").append(absentLetters).append("\n");
+        }
+
+        state.append("   Использовано букв: ").append(triedLetters.size());
         logWriter.println(state.toString());
     }
 
@@ -122,7 +141,9 @@ public class WordleGame {
     }
 
     private int countNewLetters(String word) {
-        if (word == null) return 0;
+        if (word == null) {
+            return 0;
+        }
 
         int newLetters = 0;
         for (char c : word.toCharArray()) {
@@ -134,7 +155,9 @@ public class WordleGame {
     }
 
     private void analyzeGuessForHints(String guess) {
-        if (guess == null) return;
+        if (guess == null) {
+            return;
+        }
 
         String pattern = generateHint(guess);
         Map<Character, Integer> availableInAnswer = new HashMap<>();
@@ -159,7 +182,9 @@ public class WordleGame {
         }
 
         for (int i = 0; i < pattern.length(); i++) {
-            if (pattern.charAt(i) == '+') continue;
+            if (pattern.charAt(i) == '+') {
+                continue;
+            }
 
             char currentChar = guess.charAt(i);
 
@@ -177,8 +202,7 @@ public class WordleGame {
                     break;
 
                 case '-':
-                    if (!presentLetters.contains(currentChar) &&
-                            !availableInAnswer.containsKey(currentChar)) {
+                    if (!presentLetters.contains(currentChar) && !availableInAnswer.containsKey(currentChar)) {
                         absentLetters.add(currentChar);
                     }
                     break;
@@ -206,7 +230,9 @@ public class WordleGame {
     }
 
     private boolean matchesAllConditions(String word) {
-        if (word == null) return false;
+        if (word == null) {
+            return false;
+        }
 
         for (char absentChar : absentLetters) {
             if (word.indexOf(absentChar) != -1) {
@@ -250,7 +276,9 @@ public class WordleGame {
     }
 
     private String generateHint(String guess) {
-        if (guess == null) return "-----";
+        if (guess == null) {
+            return "-----";
+        }
 
         guess = guess.toLowerCase();
         StringBuilder hint = new StringBuilder();

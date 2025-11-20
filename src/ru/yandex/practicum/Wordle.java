@@ -1,7 +1,7 @@
 package ru.yandex.practicum;
 
-import java.util.Scanner;
 import java.io.*;
+import java.util.Scanner;
 
 public class Wordle {
 
@@ -14,13 +14,11 @@ public class Wordle {
             runGame(logWriter);
 
         } catch (WordleSystemException e) {
-
             if (logWriter != null) {
                 logWriter.println("СИСТЕМНАЯ ОШИБКА: " + e.getMessage());
                 e.printStackTrace(logWriter);
             }
         } catch (WordleGameException e) {
-
             if (logWriter != null) {
                 logWriter.println("ИГРОВАЯ ОШИБКА: " + e.getMessage());
             }
@@ -33,7 +31,7 @@ public class Wordle {
             System.err.println("Критическая ошибка: " + e.getMessage());
         } finally {
             if (logWriter != null) {
-                logWriter.println("=== ИГРА ЗАВЕРШЕНА ===");
+                logWriter.println("=== ИГРА ЗАВЕРШЕНA ===");
                 logWriter.close();
             }
         }
@@ -84,7 +82,6 @@ public class Wordle {
 
                 try {
                     String normalizedGuess = guess.toLowerCase().replace('ё', 'е').trim();
-
                     dictionary.contains(normalizedGuess);
 
                     String result = game.checkGuess(normalizedGuess);
