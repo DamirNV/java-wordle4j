@@ -74,8 +74,8 @@ class WordleDictionaryTest {
     @Test
     @DisplayName("Нормализация ввода: нижний регистр и замена ё на е")
     void contains_NormalizesInput() {
-        assertTrue(dictionary.contains("СТОЛ"));    // верхний регистр
-        assertTrue(dictionary.contains(" СтОл "));  // пробелы и смешанный регистр
+        assertTrue(dictionary.contains("СТОЛ"));
+        assertTrue(dictionary.contains(" СтОл "));
     }
 
     @Test
@@ -95,7 +95,6 @@ class WordleDictionaryTest {
         assertFalse(words.isEmpty());
         assertEquals(5, words.size());
 
-        // Проверяем что возвращается копия, а не оригинал
         words.add("новоеслово");
         List<String> originalWords = dictionary.getWords();
         assertFalse(originalWords.contains("новоеслово"));

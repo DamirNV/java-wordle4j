@@ -39,7 +39,6 @@ class WordleGameTest {
     @Test
     @DisplayName("Проверка слова с правильными и неправильными буквами")
     void checkGuess_MixedLetters_ReturnsCorrectPattern() {
-        // Настроим игру с известным словом для предсказуемого теста
         List<String> words = Arrays.asList("герой");
         WordleDictionary testDict = new WordleDictionary(words, testLogWriter);
         WordleGame testGame = new WordleGame(testDict, testLogWriter);

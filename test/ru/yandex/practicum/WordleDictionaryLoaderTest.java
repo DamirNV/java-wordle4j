@@ -23,7 +23,6 @@ class WordleDictionaryLoaderTest {
     @Test
     @DisplayName("Загрузка словаря из существующего файла")
     void loadDictionary_ValidFile_ReturnsDictionary() {
-        // Создаем временный файл с тестовыми словами
         String testContent = "стол\nстул\nручка\nбумага\nтесто\n";
         File testFile = createTempFile(testContent);
 
