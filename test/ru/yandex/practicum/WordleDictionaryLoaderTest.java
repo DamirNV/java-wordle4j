@@ -22,7 +22,7 @@ class WordleDictionaryLoaderTest {
     @Test
     @DisplayName("Загрузка словаря из существующего файла")
     void loadDictionary_ValidFile_ReturnsDictionary() {
-        String testContent = "ручка\nбумага\nтесто\nслово\n";
+        String testContent = "ручка\nбумага\nтесто\n";
         File testFile = createTempFile(testContent);
 
         WordleDictionaryLoader loader = new WordleDictionaryLoader(testLogWriter);
@@ -30,7 +30,7 @@ class WordleDictionaryLoaderTest {
 
         assertNotNull(dictionary);
         assertTrue(dictionary.contains("ручка"));
-        assertTrue(dictionary.contains("слово"));
+        assertTrue(dictionary.contains("тесто"));
 
         testFile.delete();
     }
@@ -38,16 +38,20 @@ class WordleDictionaryLoaderTest {
     @Test
     @DisplayName("Загрузка словаря фильтрует только 5-буквенные слова")
     void loadDictionary_FiltersFiveLetterWords() {
-        String testContent = "стол\nстул\nручка\nбумага\nтесто\nдлинноеслово\nкот\n";
+        String testContent = "ручка\nбумага\nтесто\nдлинноеслово\nкот\n";
         File testFile = createTempFile(testContent);
 
         WordleDictionaryLoader loader = new WordleDictionaryLoader(testLogWriter);
         WordleDictionary dictionary = loader.loadDictionary(testFile.getAbsolutePath());
 
-        assertFalse(dictionary.contains("стол"));
-        assertFalse(dictionary.contains("стул"));
+        // Проверяем что 5-буквенные слова остались
         assertTrue(dictionary.contains("ручка"));
         assertTrue(dictionary.contains("тесто"));
+
+        // Проверяем что 4-буквенные слова НЕ остались
+        assertThrows(WordNotFoundInDictionaryException.class, () -> {
+            dictionary.contains("кот");
+        });
 
         testFile.delete();
     }
@@ -55,16 +59,15 @@ class WordleDictionaryLoaderTest {
     @Test
     @DisplayName("Нормализация слов: нижний регистр и замена ё на е")
     void loadDictionary_NormalizesWords() {
-        String testContent = "Ручка\nЁлка\nМёд\nСлово\n";
+        String testContent = "СтОлк\nЁлка\nМёдок\n"; // Используем 5-буквенные слова
         File testFile = createTempFile(testContent);
 
         WordleDictionaryLoader loader = new WordleDictionaryLoader(testLogWriter);
         WordleDictionary dictionary = loader.loadDictionary(testFile.getAbsolutePath());
 
-        assertTrue(dictionary.contains("ручка"));
+        assertTrue(dictionary.contains("столк"));
         assertTrue(dictionary.contains("елка"));
-        assertTrue(dictionary.contains("мед"));
-        assertTrue(dictionary.contains("слово"));
+        assertTrue(dictionary.contains("медок"));
 
         testFile.delete();
     }

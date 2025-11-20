@@ -5,16 +5,13 @@ import java.util.*;
 
 public class WordleGame {
 
-    private String answer;
-    private int steps;
-    private WordleDictionary dictionary;
-    private PrintWriter logWriter;
+    private final String answer;
+    private int remainingAttempts;
+    private final WordleDictionary dictionary;
+    private final PrintWriter logWriter;
 
-    private List<String> previousGuesses = new ArrayList<>();
-    private Map<Integer, Character> correctPositions = new HashMap<>();
-    private Set<Character> presentLetters = new HashSet<>();
-    private Set<Character> absentLetters = new HashSet<>();
-    private Set<Character> triedLetters = new HashSet<>();
+    private final List<String> previousGuesses = new ArrayList<>();
+    private final WordleHintFilter hintFilter = new WordleHintFilter();
 
     public WordleGame(WordleDictionary dictionary, PrintWriter logWriter) {
         if (dictionary == null) {
@@ -25,7 +22,7 @@ public class WordleGame {
         }
 
         this.answer = dictionary.getRandomWord();
-        this.steps = 6;
+        this.remainingAttempts = 6;
         this.dictionary = dictionary;
         this.logWriter = logWriter;
 
@@ -37,89 +34,58 @@ public class WordleGame {
     }
 
     public String checkGuess(String guess) {
-        if (steps <= 0) {
+        if (remainingAttempts <= 0) {
             throw new WordleGameException("Игра уже завершена");
         }
         if (guess == null) {
             throw new WordNotFoundInDictionaryException("Слово не может быть null");
         }
 
-        steps--;
-        String normalizedGuess = guess.toLowerCase().replace('ё', 'е').trim();
+        String normalizedGuess = normalizeWord(guess);
         previousGuesses.add(normalizedGuess);
 
-        logWriter.println("Проверка слова: " + normalizedGuess + " (осталось попыток: " + steps + ")");
+        String result = generateHintPattern(normalizedGuess);
 
-        analyzeGuessForHints(normalizedGuess);
-        return generateHint(guess);
+        remainingAttempts--;
+
+        hintFilter.updateFromGuess(normalizedGuess, result, answer);
+
+        logWriter.println("Проверка слова: " + normalizedGuess + " -> " + result + " (осталось попыток: " + remainingAttempts + ")");
+
+        return result;
     }
 
     public boolean isGameOver() {
-        return steps <= 0;
+        return remainingAttempts <= 0 || isWordGuessed();
     }
 
-    public boolean isWordGuessed(String lastGuess) {
-        if (lastGuess == null) {
+    public boolean isWordGuessed() {
+        if (previousGuesses.isEmpty()) {
             return false;
         }
-        return generateHint(lastGuess).equals("+++++");
+        String lastGuess = previousGuesses.get(previousGuesses.size() - 1);
+        return generateHintPattern(lastGuess).equals("+++++");
     }
 
     public String generateHint() {
-        logMessageWithState("Генерация подсказки");
+        logHintFilterState();
 
-        if (previousGuesses.isEmpty()) {
-            String randomHint = getRandomWordExcludingUsed();
-            logWriter.println("Первая подсказка: " + randomHint);
-            return randomHint;
-        }
+        List<String> possibleWords = dictionary.getFilteredWords(hintFilter);
 
-        List<String> allWords = dictionary.getWords();
-        List<String> possibleWords = filterWordsByKnownConditions(allWords);
+        possibleWords.removeAll(previousGuesses);
 
-        if (!possibleWords.isEmpty()) {
-            String bestHint = findBestHint(possibleWords);
-            logWriter.println("Лучшая подсказка: " + bestHint);
-            return bestHint;
-        }
-
-        String fallbackHint = getRandomWordExcludingUsed();
-        logWriter.println("Fallback подсказка: " + fallbackHint);
-        return fallbackHint;
-    }
-
-    private void logMessageWithState(String message) {
-        StringBuilder state = new StringBuilder();
-        state.append("=== ").append(message).append(" ===\n");
-        state.append("   Попытки: ").append(previousGuesses.size()).append("\n");
-
-        if (!correctPositions.isEmpty()) {
-            state.append("   Известные позиции: ");
-            for (int i = 0; i < 5; i++) {
-                if (correctPositions.containsKey(i)) {
-                    state.append(i).append("=").append(correctPositions.get(i)).append(" ");
-                }
-            }
-            state.append("\n");
-        }
-
-        if (!presentLetters.isEmpty()) {
-            state.append("   Есть в слове: ").append(presentLetters).append("\n");
-        }
-
-        if (!absentLetters.isEmpty()) {
-            state.append("   Отсутствуют: ").append(absentLetters).append("\n");
-        }
-
-        state.append("   Использовано букв: ").append(triedLetters.size());
-        logWriter.println(state.toString());
-    }
-
-    private String findBestHint(List<String> possibleWords) {
         if (possibleWords.isEmpty()) {
-            throw new WordleSystemException("Список возможных слов пуст");
+            String fallbackHint = getRandomWordExcludingUsed();
+            logWriter.println("Fallback подсказка: " + fallbackHint);
+            return fallbackHint;
         }
 
+        String bestHint = selectBestHint(possibleWords);
+        logWriter.println("Лучшая подсказка: " + bestHint);
+        return bestHint;
+    }
+
+    private String selectBestHint(List<String> possibleWords) {
         if (possibleWords.size() <= 3) {
             Random random = new Random();
             return possibleWords.get(random.nextInt(possibleWords.size()));
@@ -136,142 +102,76 @@ public class WordleGame {
             }
         }
 
-        logWriter.println("Выбрано слово с " + maxNewLetters + " новыми буквами: " + bestWord);
         return bestWord;
     }
 
     private int countNewLetters(String word) {
-        if (word == null) {
-            return 0;
-        }
-
+        Set<Character> usedLetters = getAllUsedLetters();
         int newLetters = 0;
+
         for (char c : word.toCharArray()) {
-            if (!triedLetters.contains(c)) {
+            if (!usedLetters.contains(c)) {
                 newLetters++;
             }
         }
         return newLetters;
     }
 
-    private void analyzeGuessForHints(String guess) {
-        if (guess == null) {
-            return;
-        }
-
-        String pattern = generateHint(guess);
-        Map<Character, Integer> availableInAnswer = new HashMap<>();
-
-        StringBuilder analysisLog = new StringBuilder();
-        analysisLog.append("Анализ догадки: '").append(guess).append("' -> '").append(pattern).append("'");
-
-        for (char c : answer.toCharArray()) {
-            availableInAnswer.put(c, availableInAnswer.getOrDefault(c, 0) + 1);
-        }
-
-        for (int i = 0; i < pattern.length(); i++) {
-            char currentChar = guess.charAt(i);
-            triedLetters.add(currentChar);
-
-            if (pattern.charAt(i) == '+') {
-                correctPositions.put(i, currentChar);
-                presentLetters.add(currentChar);
-                absentLetters.remove(currentChar);
-                availableInAnswer.put(currentChar, availableInAnswer.get(currentChar) - 1);
+    private Set<Character> getAllUsedLetters() {
+        Set<Character> usedLetters = new HashSet<>();
+        for (String guess : previousGuesses) {
+            for (char c : guess.toCharArray()) {
+                usedLetters.add(c);
             }
         }
-
-        for (int i = 0; i < pattern.length(); i++) {
-            if (pattern.charAt(i) == '+') {
-                continue;
-            }
-
-            char currentChar = guess.charAt(i);
-
-            switch (pattern.charAt(i)) {
-                case '^':
-                    if (availableInAnswer.getOrDefault(currentChar, 0) > 0) {
-                        presentLetters.add(currentChar);
-                        absentLetters.remove(currentChar);
-                        availableInAnswer.put(currentChar, availableInAnswer.get(currentChar) - 1);
-                    } else {
-                        if (!presentLetters.contains(currentChar)) {
-                            absentLetters.add(currentChar);
-                        }
-                    }
-                    break;
-
-                case '-':
-                    if (!presentLetters.contains(currentChar) && !availableInAnswer.containsKey(currentChar)) {
-                        absentLetters.add(currentChar);
-                    }
-                    break;
-            }
-        }
-
-        analysisLog.append("\n   Результат анализа:\n");
-        analysisLog.append("      Правильные позиции: ").append(formatPositions(correctPositions)).append("\n");
-        analysisLog.append("      Присутствуют: ").append(presentLetters).append("\n");
-        analysisLog.append("      Отсутствуют: ").append(absentLetters);
-        logWriter.println(analysisLog);
+        return usedLetters;
     }
 
-    private String formatPositions(Map<Integer, Character> positions) {
-        if (positions.isEmpty()) return "нет";
-        StringBuilder sb = new StringBuilder();
+    private String generateHintPattern(String guess) {
+        if (!guess.equals(answer) && guess.length() != 5) {
+            return "-----";
+        }
+
+        char[] result = new char[5];
+        Map<Character, Integer> availableCounts = new HashMap<>();
+
         for (int i = 0; i < 5; i++) {
-            if (positions.containsKey(i)) {
-                sb.append("поз.").append(i).append("=").append(positions.get(i)).append(" ");
+            char answerChar = answer.charAt(i);
+            if (guess.charAt(i) != answerChar) {
+                availableCounts.put(answerChar, availableCounts.getOrDefault(answerChar, 0) + 1);
             }
         }
-        return sb.toString();
+
+        for (int i = 0; i < 5; i++) {
+            if (guess.charAt(i) == answer.charAt(i)) {
+                result[i] = '+';
+            } else {
+                result[i] = '-';
+            }
+        }
+
+        for (int i = 0; i < 5; i++) {
+            if (result[i] == '+') continue;
+
+            char guessChar = guess.charAt(i);
+            if (availableCounts.getOrDefault(guessChar, 0) > 0) {
+                result[i] = '^';
+                availableCounts.put(guessChar, availableCounts.get(guessChar) - 1);
+            }
+        }
+
+        return new String(result);
     }
 
-    private List<String> filterWordsByKnownConditions(List<String> words) {
-        if (words == null || words.isEmpty()) {
-            return new ArrayList<>();
-        }
-
-        List<String> filtered = new ArrayList<>();
-        for (String word : words) {
-            if (matchesAllConditions(word)) {
-                filtered.add(word);
-            }
-        }
-        return filtered;
-    }
-
-    private boolean matchesAllConditions(String word) {
-        if (word == null) {
-            return false;
-        }
-
-        for (char absentChar : absentLetters) {
-            if (word.indexOf(absentChar) != -1) {
-                return false;
-            }
-        }
-
-        for (char presentChar : presentLetters) {
-            if (word.indexOf(presentChar) == -1) {
-                return false;
-            }
-        }
-
-        for (Map.Entry<Integer, Character> entry : correctPositions.entrySet()) {
-            int position = entry.getKey();
-            char expectedChar = entry.getValue();
-
-            if (word.charAt(position) != expectedChar) {
-                return false;
-            }
-        }
-
-        if (previousGuesses.contains(word)) {
-            return false;
-        }
-
-        return true;
+    private void logHintFilterState() {
+        StringBuilder state = new StringBuilder();
+        state.append("=== СОСТОЯНИЕ ФИЛЬТРА ПОДСКАЗОК ===\n");
+        state.append("   Попытки: ").append(previousGuesses.size()).append("\n");
+        state.append("   Известные позиции: ").append(hintFilter.getCorrectPositionsString()).append("\n");
+        state.append("   Присутствующие буквы: ").append(hintFilter.getPresentLetters()).append("\n");
+        state.append("   Отсутствующие буквы: ").append(hintFilter.getAbsentLetters()).append("\n");
+        state.append("   Минимальные количества букв: ").append(hintFilter.getMinLetterCounts());
+        logWriter.println(state.toString());
     }
 
     private String getRandomWordExcludingUsed() {
@@ -287,35 +187,23 @@ public class WordleGame {
         return allWords.get(random.nextInt(allWords.size()));
     }
 
-    private String generateHint(String guess) {
-        if (guess == null) {
-            return "-----";
-        }
-
-        guess = guess.toLowerCase();
-        StringBuilder hint = new StringBuilder();
-        for (int i = 0; i < guess.length(); i++) {
-            char currentChar = guess.charAt(i);
-            if (currentChar == answer.charAt(i)) {
-                hint.append('+');
-            } else if (answer.indexOf(currentChar) != -1) {
-                hint.append('^');
-            } else {
-                hint.append('-');
-            }
-        }
-        return hint.toString();
+    private String normalizeWord(String word) {
+        return word.toLowerCase().replace('ё', 'е').trim();
     }
 
     public String getAnswer() {
         return answer;
     }
 
-    public int getSteps() {
-        return steps;
+    public int getRemainingAttempts() {
+        return remainingAttempts;
     }
 
-    public int getPreviousGuessesCount() {
-        return previousGuesses.size();
+    public int getUsedAttempts() {
+        return 6 - remainingAttempts;
+    }
+
+    public List<String> getPreviousGuesses() {
+        return new ArrayList<>(previousGuesses);
     }
 }

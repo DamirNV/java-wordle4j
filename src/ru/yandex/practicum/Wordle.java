@@ -57,32 +57,29 @@ public class Wordle {
             boolean gameWon = false;
 
             while (!game.isGameOver() && !gameWon) {
-                System.out.println("\n➡️ Осталось попыток: " + game.getSteps());
+                System.out.println("\n➡️ Осталось попыток: " + game.getRemainingAttempts());
                 System.out.print("Ваше слово: ");
-                String guess = scanner.nextLine();
+                String input = scanner.nextLine();
 
-                if (guess.isEmpty()) {
+                if (input.isEmpty()) {
                     String hint = game.generateHint();
                     System.out.println("💡 Подсказка: попробуйте слово - " + hint);
                     logWriter.println("Пользователь запросил подсказку: " + hint);
                     continue;
                 }
 
-                if (!guess.matches("[а-яёА-ЯЁ]+")) {
-                    System.out.println("❌ Слово должно содержать только русские буквы!");
-                    logWriter.println("Пользователь ввел слово с неверными символами: " + guess);
-                    continue;
-                }
-
-                if (guess.length() != 5) {
-                    System.out.println("❌ Слово должно состоять из 5 букв!");
-                    logWriter.println("Пользователь ввел слово неверной длины: " + guess);
+                if (!isValidInput(input)) {
+                    System.out.println("❌ Слово должно содержать только русские буквы и состоять из 5 символов!");
+                    logWriter.println("Пользователь ввел невалидное слово: " + input);
                     continue;
                 }
 
                 try {
-                    String normalizedGuess = guess.toLowerCase().replace('ё', 'е').trim();
-                    dictionary.contains(normalizedGuess);
+                    String normalizedGuess = normalizeWord(input);
+
+                    if (!dictionary.contains(normalizedGuess)) {
+                        throw new WordNotFoundInDictionaryException(normalizedGuess);
+                    }
 
                     String result = game.checkGuess(normalizedGuess);
                     logWriter.println("Догадка: " + normalizedGuess + " -> " + result);
@@ -91,7 +88,7 @@ public class Wordle {
                     System.out.println("   Слово:    " + normalizedGuess);
                     System.out.println("   Паттерн:  " + result);
 
-                    if (game.isWordGuessed(normalizedGuess)) {
+                    if (game.isWordGuessed()) {
                         System.out.println("\n🎉 ПОЗДРАВЛЯЕМ! Вы угадали слово!");
                         logWriter.println("Игра выиграна! Слово: " + normalizedGuess);
                         gameWon = true;
@@ -110,12 +107,22 @@ public class Wordle {
             }
 
             System.out.println("\n📈 Статистика игры:");
-            System.out.println("   Использовано попыток: " + (6 - game.getSteps()));
+            System.out.println("   Использовано попыток: " + game.getUsedAttempts());
             System.out.println("   Слово: " + game.getAnswer());
 
         } finally {
             scanner.close();
             System.out.println("\n👋 Спасибо за игру!");
         }
+    }
+
+    private static boolean isValidInput(String input) {
+        return input != null &&
+                input.length() == 5 &&
+                input.matches("[а-яёА-ЯЁ]+");
+    }
+
+    private static String normalizeWord(String word) {
+        return word.toLowerCase().replace('ё', 'е').trim();
     }
 }

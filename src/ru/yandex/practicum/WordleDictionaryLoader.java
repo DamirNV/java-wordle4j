@@ -7,7 +7,7 @@ import java.util.List;
 
 public class WordleDictionaryLoader {
 
-    private PrintWriter logWriter;
+    private final PrintWriter logWriter;
 
     public WordleDictionaryLoader(PrintWriter logWriter) {
         if (logWriter == null) {

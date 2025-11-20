@@ -1,15 +1,13 @@
 package ru.yandex.practicum;
 
 import java.io.PrintWriter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 public class WordleDictionary {
 
-    private List<String> words;
-    private Random random;
-    private PrintWriter logWriter;
+    private final List<String> words;
+    private final Random random;
+    private final PrintWriter logWriter;
 
     public WordleDictionary(List<String> words, PrintWriter logWriter) {
         if (words == null) {
@@ -22,6 +20,7 @@ public class WordleDictionary {
         this.words = new ArrayList<>(words);
         this.random = new Random();
         this.logWriter = logWriter;
+
         logWriter.println("Словарь создан, слов: " + words.size());
 
         if (this.words.isEmpty()) {
@@ -34,7 +33,7 @@ public class WordleDictionary {
             throw new WordNotFoundInDictionaryException("Слово не может быть null");
         }
 
-        String normalizedWord = word.toLowerCase().replace('ё', 'е').trim();
+        String normalizedWord = normalizeWord(word);
         logWriter.println("Проверка слова в словаре: " + normalizedWord);
 
         if (normalizedWord.isEmpty()) {
@@ -63,5 +62,19 @@ public class WordleDictionary {
 
     public List<String> getWords() {
         return new ArrayList<>(words);
+    }
+
+    public List<String> getFilteredWords(WordleHintFilter filter) {
+        List<String> filtered = new ArrayList<>();
+        for (String word : words) {
+            if (filter.matches(word)) {
+                filtered.add(word);
+            }
+        }
+        return filtered;
+    }
+
+    private String normalizeWord(String word) {
+        return word.toLowerCase().replace('ё', 'е').trim();
     }
 }
