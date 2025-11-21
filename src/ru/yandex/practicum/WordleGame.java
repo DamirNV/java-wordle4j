@@ -199,8 +199,19 @@ public class WordleGame {
         return word.toLowerCase().replace('ё', 'е').trim();
     }
 
-    public String getAnswer() { return answer; }
-    public int getRemainingAttempts() { return remainingAttempts; }
-    public int getUsedAttempts() { return 6 - remainingAttempts; }
-    public Set<String> getPreviousGuesses() { return new HashSet<>(previousGuesses); }
+    public String getAnswer() {
+        return answer;
+    }
+
+    public int getRemainingAttempts() {
+        return remainingAttempts;
+    }
+
+    public int getUsedAttempts() {
+        return 6 - remainingAttempts;
+    }
+
+    public Set<String> getPreviousGuesses() {
+        return new HashSet<>(previousGuesses);
+    }
 }
