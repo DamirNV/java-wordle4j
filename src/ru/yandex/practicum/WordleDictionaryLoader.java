@@ -38,7 +38,7 @@ public class WordleDictionaryLoader {
 
             while ((line = reader.readLine()) != null) {
                 String formattedWord = formatWord(line.trim());
-                if (formattedWord.length() == 5 && uniqueWords.add(formattedWord)) {
+                if (!formattedWord.isEmpty() && formattedWord.length() == 5 && uniqueWords.add(formattedWord)) {
                     loadedWords++;
                 }
             }
@@ -60,6 +60,10 @@ public class WordleDictionaryLoader {
 
     private String formatWord(String word) {
         if (word == null) return "";
-        return word.toLowerCase().replace('ё', 'е').trim();
+        String normalized = word.toLowerCase().replace('ё', 'е').trim();
+        if (!normalized.matches("[а-яё]+")) {
+            return "";
+        }
+        return normalized;
     }
 }

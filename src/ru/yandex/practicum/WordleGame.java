@@ -9,9 +9,11 @@ public class WordleGame {
     private int remainingAttempts;
     private final WordleDictionary dictionary;
     private final PrintWriter logWriter;
-
-    private final List<String> previousGuesses = new ArrayList<>();
+    private final Set<String> previousGuesses = new HashSet<>();
     private final WordleHintFilter hintFilter = new WordleHintFilter();
+    private List<String> cachedPossibleWords;
+    private boolean filterDirty = true;
+    private final Random random = new Random();
 
     public WordleGame(WordleDictionary dictionary, PrintWriter logWriter) {
         if (dictionary == null) {
@@ -50,7 +52,8 @@ public class WordleGame {
         String result = generateHintPattern(normalizedGuess);
         remainingAttempts--;
 
-        hintFilter.updateFromGuess(normalizedGuess, result);
+        hintFilter.updateFromGuess(normalizedGuess, result, answer);
+        filterDirty = true;
 
         logWriter.println("Проверка слова: " + normalizedGuess + " -> " + result + " (осталось попыток: " + remainingAttempts + ")");
         return result;
@@ -62,13 +65,17 @@ public class WordleGame {
 
     public boolean isWordGuessed() {
         if (previousGuesses.isEmpty()) return false;
-        String lastGuess = previousGuesses.get(previousGuesses.size() - 1);
-        return generateHintPattern(lastGuess).equals("+++++");
+        for (String guess : previousGuesses) {
+            if (answer.equals(guess)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public String generateHint() {
         logHintFilterState();
-        List<String> possibleWords = dictionary.getFilteredWords(hintFilter);
+        List<String> possibleWords = getCachedPossibleWords();
 
         List<String> availableWords = new ArrayList<>();
         for (String word : possibleWords) {
@@ -84,9 +91,18 @@ public class WordleGame {
         return selectBestHint(availableWords);
     }
 
+    private List<String> getCachedPossibleWords() {
+        if (filterDirty || cachedPossibleWords == null) {
+            cachedPossibleWords = dictionary.getFilteredWords(hintFilter);
+            filterDirty = false;
+            logWriter.println("Кэш подсказок обновлен, найдено слов: " + cachedPossibleWords.size());
+        }
+        return cachedPossibleWords;
+    }
+
     private String selectBestHint(List<String> possibleWords) {
         if (possibleWords.size() <= 3) {
-            return possibleWords.get(new Random().nextInt(possibleWords.size()));
+            return possibleWords.get(random.nextInt(possibleWords.size()));
         }
 
         String bestWord = possibleWords.get(0);
@@ -126,13 +142,12 @@ public class WordleGame {
         char[] result = new char[5];
         Arrays.fill(result, '-');
         char[] answerChars = answer.toCharArray();
-        boolean[] correctUsed = new boolean[5];
-        boolean[] presentUsed = new boolean[5];
+        boolean[] used = new boolean[5];
 
         for (int i = 0; i < 5; i++) {
             if (guess.charAt(i) == answerChars[i]) {
                 result[i] = '+';
-                correctUsed[i] = true;
+                used[i] = true;
             }
         }
 
@@ -141,9 +156,9 @@ public class WordleGame {
 
             char guessChar = guess.charAt(i);
             for (int j = 0; j < 5; j++) {
-                if (!correctUsed[j] && !presentUsed[j] && answerChars[j] == guessChar) {
+                if (!used[j] && answerChars[j] == guessChar) {
                     result[i] = '^';
-                    presentUsed[j] = true;
+                    used[j] = true;
                     break;
                 }
             }
@@ -174,10 +189,10 @@ public class WordleGame {
         }
 
         if (availableWords.isEmpty()) {
-            return allWords.get(new Random().nextInt(allWords.size()));
+            return allWords.get(random.nextInt(allWords.size()));
         }
 
-        return availableWords.get(new Random().nextInt(availableWords.size()));
+        return availableWords.get(random.nextInt(availableWords.size()));
     }
 
     private String normalizeWord(String word) {
@@ -187,5 +202,5 @@ public class WordleGame {
     public String getAnswer() { return answer; }
     public int getRemainingAttempts() { return remainingAttempts; }
     public int getUsedAttempts() { return 6 - remainingAttempts; }
-    public List<String> getPreviousGuesses() { return new ArrayList<>(previousGuesses); }
+    public Set<String> getPreviousGuesses() { return new HashSet<>(previousGuesses); }
 }

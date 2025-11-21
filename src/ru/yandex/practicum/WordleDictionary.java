@@ -2,6 +2,7 @@ package ru.yandex.practicum;
 
 import java.io.PrintWriter;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class WordleDictionary {
 
@@ -31,7 +32,7 @@ public class WordleDictionary {
     public boolean contains(String word) {
         if (word == null) return false;
         String normalized = normalizeWord(word);
-        return normalized.length() == 5 && words.contains(normalized);
+        return words.contains(normalized);
     }
 
     public String getRandomWord() {
@@ -48,13 +49,9 @@ public class WordleDictionary {
     }
 
     public List<String> getFilteredWords(WordleHintFilter filter) {
-        List<String> filtered = new ArrayList<>();
-        for (String word : words) {
-            if (filter.matches(word)) {
-                filtered.add(word);
-            }
-        }
-        return filtered;
+        return words.stream()
+                .filter(filter::matches)
+                .collect(Collectors.toList());
     }
 
     private String normalizeWord(String word) {

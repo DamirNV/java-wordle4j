@@ -6,41 +6,21 @@ import java.util.Scanner;
 public class Wordle {
 
     public static void main(String[] args) {
-        PrintWriter logWriter = null;
-        try {
-            logWriter = new PrintWriter("wordle.log", "UTF-8");
+        try (PrintWriter logWriter = new PrintWriter("wordle.log", "UTF-8")) {
             logWriter.println("=== ЗАПУСК ИГРЫ WORDLE ===");
-
             runGame(logWriter);
-
+            logWriter.println("=== ИГРА ЗАВЕРШЕНA ===");
         } catch (WordleSystemException e) {
-            if (logWriter != null) {
-                logWriter.println("СИСТЕМНАЯ ОШИБКА: " + e.getMessage());
-                e.printStackTrace(logWriter);
-            }
+            System.err.println("СИСТЕМНАЯ ОШИБКА: " + e.getMessage());
         } catch (WordleGameException e) {
-            if (logWriter != null) {
-                logWriter.println("ИГРОВАЯ ОШИБКА: " + e.getMessage());
-            }
             System.err.println("Ошибка: " + e.getMessage());
         } catch (Exception e) {
-            if (logWriter != null) {
-                logWriter.println("НЕИЗВЕСТНАЯ ОШИБКА: " + e.getMessage());
-                e.printStackTrace(logWriter);
-            }
             System.err.println("Критическая ошибка: " + e.getMessage());
-        } finally {
-            if (logWriter != null) {
-                logWriter.println("=== ИГРА ЗАВЕРШЕНA ===");
-                logWriter.close();
-            }
         }
     }
 
     private static void runGame(PrintWriter logWriter) {
-        Scanner scanner = new Scanner(System.in, "UTF-8");
-
-        try {
+        try (Scanner scanner = new Scanner(System.in, "UTF-8")) {
             WordleDictionaryLoader loader = new WordleDictionaryLoader(logWriter);
             WordleDictionary dictionary = loader.loadDictionary("words_ru.txt");
 
@@ -108,9 +88,9 @@ public class Wordle {
             System.out.println("   Использовано попыток: " + game.getUsedAttempts());
             System.out.println("   Слово: " + game.getAnswer());
 
-        } finally {
-            scanner.close();
-            System.out.println("\n👋 Спасибо за игру!");
+        } catch (Exception e) {
+            logWriter.println("Ошибка в игровом цикле: " + e.getMessage());
+            throw new WordleSystemException("Ошибка в игровом цикле", e);
         }
     }
 
@@ -120,7 +100,12 @@ public class Wordle {
                 input.matches("[а-яёА-ЯЁ]+");
     }
 
-    private static String normalizeWord(String word) {
-        return word.toLowerCase().replace('ё', 'е').trim();
+    public static String normalizeWord(String word) {
+        if (word == null) {
+            return null;
+        }
+        return word.trim()
+                .toLowerCase()
+                .replace('ё', 'е');
     }
 }
