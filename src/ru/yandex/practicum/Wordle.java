@@ -1,18 +1,111 @@
 package ru.yandex.practicum;
 
-/*
-в главном классе нам нужно:
-    создать лог-файл (он должен передаваться во все классы)
-    создать загрузчик словарей WordleDictionaryLoader
-    загрузить словарь WordleDictionary с помощью класса WordleDictionaryLoader
-    затем создать игру WordleGame и передать ей словарь
-    вызвать игровой метод в котором в цикле опрашивать пользователя и передавать информацию в игру
-    вывести состояние игры и конечный результат
- */
+import java.io.PrintWriter;
+import java.util.Scanner;
+
 public class Wordle {
 
     public static void main(String[] args) {
-
+        try (PrintWriter logWriter = new PrintWriter("wordle.log", "UTF-8")) {
+            logWriter.println("=== ЗАПУСК ИГРЫ WORDLE ===");
+            runGame(logWriter);
+            logWriter.println("=== ИГРА ЗАВЕРШЕНA ===");
+        } catch (WordleSystemException e) {
+            System.err.println("СИСТЕМНАЯ ОШИБКА: " + e.getMessage());
+        } catch (WordleGameException e) {
+            System.err.println("Ошибка: " + e.getMessage());
+        } catch (Exception e) {
+            System.err.println("Критическая ошибка: " + e.getMessage());
+        }
     }
 
+    private static void runGame(PrintWriter logWriter) {
+        try (Scanner scanner = new Scanner(System.in, "UTF-8")) {
+            WordleDictionaryLoader loader = new WordleDictionaryLoader(logWriter);
+            WordleDictionary dictionary = loader.loadDictionary("words_ru.txt");
+
+            WordleGame game = new WordleGame(dictionary, logWriter);
+
+            System.out.println("🎯 Добро пожаловать в Wordle!");
+            System.out.println("У вас 6 попыток чтобы угадать 5-буквенное слово");
+            System.out.println("📝 Правила:");
+            System.out.println("   '+' - буква на правильной позиции");
+            System.out.println("   '^' - буква есть в слове, но в другой позиции");
+            System.out.println("   '-' - буквы нет в слове");
+            System.out.println("💡 Нажмите Enter для подсказки");
+
+            while (!game.isGameOver()) {
+                System.out.println("\n➡️ Осталось попыток: " + game.getRemainingAttempts());
+                System.out.print("Ваше слово: ");
+                String input = scanner.nextLine();
+
+                if (input.isEmpty()) {
+                    String hint = game.generateHint();
+                    System.out.println("💡 Подсказка: попробуйте слово - " + hint);
+                    logWriter.println("Пользователь запросил подсказку: " + hint);
+                    continue;
+                }
+
+                if (!isValidInput(input)) {
+                    System.out.println("❌ Слово должно содержать только русские буквы и состоять из 5 символов!");
+                    logWriter.println("Пользователь ввел невалидное слово: " + input);
+                    continue;
+                }
+
+                try {
+                    String normalizedGuess = normalizeWord(input);
+
+                    if (!dictionary.contains(normalizedGuess)) {
+                        throw new WordNotFoundInDictionaryException(normalizedGuess);
+                    }
+
+                    String result = game.checkGuess(normalizedGuess);
+                    logWriter.println("Догадка: " + normalizedGuess + " -> " + result);
+
+                    System.out.println("📊 Результат:");
+                    System.out.println("   Слово:    " + normalizedGuess);
+                    System.out.println("   Паттерн:  " + result);
+
+                    if (game.isWordGuessed()) {
+                        System.out.println("\n🎉 ПОЗДРАВЛЯЕМ! Вы угадали слово!");
+                        logWriter.println("Игра выиграна! Слово: " + normalizedGuess);
+                        break;
+                    }
+
+                } catch (WordNotFoundInDictionaryException e) {
+                    System.out.println("❌ " + e.getMessage());
+                    logWriter.println("Ошибка словаря: " + e.getMessage());
+                }
+            }
+
+            if (!game.isWordGuessed()) {
+                System.out.println("\n💀 ИГРА ОКОНЧЕНА!");
+                System.out.println("Загаданное слово было: " + game.getAnswer());
+                logWriter.println("Игра проиграна. Загаданное слово: " + game.getAnswer());
+            }
+
+            System.out.println("\n📈 Статистика игры:");
+            System.out.println("   Использовано попыток: " + game.getUsedAttempts());
+            System.out.println("   Слово: " + game.getAnswer());
+
+        } catch (Exception e) {
+            logWriter.println("Ошибка в игровом цикле: " + e.getMessage());
+            throw new WordleSystemException("Ошибка в игровом цикле", e);
+        }
+    }
+
+    private static boolean isValidInput(String input) {
+        return input != null &&
+                input.length() == 5 &&
+                input.matches("[а-яёА-ЯЁ]+");
+    }
+
+    public static String normalizeWord(String word) {
+        if (word == null) {
+            return null;
+        }
+        return word.trim()
+                .toLowerCase()
+                .replace('ё', 'е');
+    }
 }

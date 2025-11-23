@@ -1,14 +1,60 @@
 package ru.yandex.practicum;
 
-import java.util.List;
+import java.io.PrintWriter;
+import java.util.*;
+import java.util.stream.Collectors;
 
-/*
-этот класс содержит в себе список слов List<String>
-    его методы похожи на методы списка, но учитывают особенности игры
-    также этот класс может содержать рутинные функции по сравнению слов, букв и т.д.
- */
 public class WordleDictionary {
 
-    private List<String> words;
+    private final List<String> words;
+    private final Random random;
+    private final PrintWriter logWriter;
 
+    public WordleDictionary(List<String> words, PrintWriter logWriter) {
+        if (words == null) {
+            throw new WordleSystemException("Список слов не может быть null");
+        }
+        if (logWriter == null) {
+            throw new WordleSystemException("Логгер не может быть null");
+        }
+
+        this.words = new ArrayList<>(words);
+        this.random = new Random();
+        this.logWriter = logWriter;
+
+        logWriter.println("Словарь создан, слов: " + words.size());
+
+        if (this.words.isEmpty()) {
+            throw new WordleSystemException("Передан пустой список слов в словарь");
+        }
+    }
+
+    public boolean contains(String word) {
+        if (word == null) return false;
+        String normalized = normalizeWord(word);
+        return words.contains(normalized);
+    }
+
+    public String getRandomWord() {
+        if (words.isEmpty()) {
+            throw new WordleSystemException("Попытка получить слово из пустого словаря");
+        }
+        String word = words.get(random.nextInt(words.size()));
+        logWriter.println("Выбрано случайное слово: " + word);
+        return word;
+    }
+
+    public List<String> getWords() {
+        return new ArrayList<>(words);
+    }
+
+    public List<String> getFilteredWords(WordleHintFilter filter) {
+        return words.stream()
+                .filter(filter::matches)
+                .collect(Collectors.toList());
+    }
+
+    private String normalizeWord(String word) {
+        return word.toLowerCase().replace('ё', 'е').trim();
+    }
 }
